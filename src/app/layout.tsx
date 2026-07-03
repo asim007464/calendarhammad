@@ -27,14 +27,11 @@ export const metadata: Metadata = {
   keywords: [...SEO_KEYWORDS],
   robots: { index: true, follow: true },
   icons: {
-    icon: [
-      { url: "/27278978-1eed-4655-8c89-ecc9590e1f1f.png", type: "image/png" },
-      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
-    ],
-    apple: [{ url: "/27278978-1eed-4655-8c89-ecc9590e1f1f.png", type: "image/png" }],
-    shortcut: [{ url: "/favicon.png", type: "image/png" }],
+    icon: [{ url: "/icon", type: "image/png", sizes: "512x512" }],
+    apple: [{ url: "/apple-icon", type: "image/png", sizes: "180x180" }],
+    shortcut: [{ url: "/icon", type: "image/png" }],
   },
-  appleWebApp: { capable: true, title: SITE_NAME },
+  appleWebApp: { capable: true, title: "QSO" },
 };
 
 export function generateViewport() {

@@ -6,7 +6,7 @@ export const PWA_THEME_COLOR = "#c6ff34";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "QSO Dates",
-    short_name: "QSO Dates",
+    short_name: "QSO",
     description:
       "Ham radio activity calendar — amateur radio contests, POTA, SOTA, DXpeditions, field days, and special event stations worldwide.",
     start_url: "/",
@@ -17,10 +17,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: PWA_THEME_COLOR,
     categories: ["utilities", "productivity"],
     icons: [
-      { src: "/icon.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/favicon.png", sizes: "32x32", type: "image/png", purpose: "any" },
-      { src: "/27278978-1eed-4655-8c89-ecc9590e1f1f.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/27278978-1eed-4655-8c89-ecc9590e1f1f.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/apple-icon", sizes: "180x180", type: "image/png", purpose: "any" },
+      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }
