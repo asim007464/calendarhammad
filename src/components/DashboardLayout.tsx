@@ -38,7 +38,7 @@ export function DashboardNav() {
         <div className="topbar-inner">
           <Link href="/" className="brand">
             <BrandMark link={false} size="nav" />
-            <small className="no-cap brand-sub">Dashboard</small>
+            <small className="no-cap brand-sub">Profile</small>
           </Link>
           <Link href="/" className="btn btn-ghost btn-sm">← Calendar</Link>
         </div>
@@ -61,7 +61,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="topbar-inner">
           <Link href="/" className="brand">
             <BrandMark link={false} size="nav" />
-            <small className="no-cap brand-sub">Dashboard</small>
+            <small className="no-cap brand-sub">Profile</small>
           </Link>
           <Link href="/" className="btn btn-ghost btn-sm">← Calendar</Link>
         </div>

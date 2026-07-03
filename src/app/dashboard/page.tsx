@@ -5,7 +5,7 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="panel" style={{ padding: 24 }}>
-        <h1 className="section-title">Dashboard</h1>
+        <h1 className="section-title">Profile</h1>
         <p className="section-sub">Welcome to QSO Dates — manage your profile, activities, and external feeds.</p>
 
         <div className="admin-stats" style={{ marginTop: 24 }}>

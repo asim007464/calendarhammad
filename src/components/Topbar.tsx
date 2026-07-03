@@ -63,7 +63,7 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport }: 
             <nav className="mobile-drawer-nav">
               <button type="button" className="nav-link" onClick={() => { onViewChange?.("calendar"); closeMenu(); }}>Calendar</button>
               <button type="button" className="nav-link" onClick={() => { onViewChange?.("list"); closeMenu(); }}>Activities</button>
-              <Link href="/dashboard" className="nav-link" onClick={closeMenu}>Dashboard</Link>
+              <Link href="/dashboard" className="nav-link" onClick={closeMenu}>Profile</Link>
               {!loading && canAccessAdmin && (
                 <Link href="/admin" className="nav-link" onClick={closeMenu}>Admin</Link>
               )}
@@ -111,7 +111,7 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport }: 
             >
               Activities
             </button>
-            <Link href="/dashboard" className="nav-link">Dashboard</Link>
+            <Link href="/dashboard" className="nav-link">Profile</Link>
             {!loading && canAccessAdmin && (
               <Link href="/admin" className="nav-link">Admin</Link>
             )}
