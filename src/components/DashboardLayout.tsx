@@ -5,13 +5,19 @@ import { usePathname } from "next/navigation";
 import BrandMark from "@/components/BrandMark";
 import { useAuth } from "@/hooks/useAuth";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  adminOnly?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/dashboard", label: "Home" },
   { href: "/dashboard/profile", label: "Edit Profile" },
   { href: "/dashboard/external-feeds", label: "External Feeds" },
   { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/admin", label: "Admin", adminOnly: true },
-] as const;
+];
 
 function DashboardNavLinks({ path }: { path: string }) {
   const { canAccessAdmin, loading } = useAuth();
