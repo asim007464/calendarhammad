@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoWordmark } from "@/components/LogoWordmark";
 import { SOCIAL_LINKS } from "@/types/database";
 
 export function Footer() {
@@ -6,10 +7,12 @@ export function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <div className="footer-brand">
-          <strong>QSO Dates</strong>
+          <Link href="/" className="brand-mark-link footer-logo" aria-label="QSO Dates home">
+            <LogoWordmark size="footer" />
+          </Link>
           <p>
-            Your worldwide hub for amateur radio activities — contests, special events, POTA, SOTA,
-            DXpeditions, nets and field days.
+            Your worldwide hub for amateur radio activities — ham radio contests, special event stations,
+            POTA, SOTA, DXpeditions, nets, and field days.
           </p>
           <div className="social-row">
             <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" className="social-btn">
@@ -47,8 +50,17 @@ export function Footer() {
           </ul>
         </div>
         <div className="footer-col">
+          <h4>Developers</h4>
+          <ul>
+            <li><Link href="/docs">API Docs</Link></li>
+            <li><Link href="/api-docs">API Portal</Link></li>
+            <li><Link href="/downloads">Downloads</Link></li>
+          </ul>
+        </div>
+        <div className="footer-col">
           <h4>Contact</h4>
           <ul>
+            <li><Link href="/contact">Contact Us</Link></li>
             <li><a href={SOCIAL_LINKS.whatsapp} target="_blank" rel="noopener noreferrer">{SOCIAL_LINKS.whatsappDisplay}</a></li>
             <li><a href={SOCIAL_LINKS.site}>www.qsodates.com</a></li>
           </ul>

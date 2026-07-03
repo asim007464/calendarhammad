@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyAdminSession } from "@/lib/adminAuth";
 
 export async function GET() {
   const admin = createAdminClient();
@@ -8,10 +9,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { title, message, password } = await request.json();
-  if (password !== process.env.ADMIN_PASSWORD && password !== "hamcaladmin") {
+  const session = await verifyAdminSession(request);
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { title, message } = await request.json();
   const admin = createAdminClient();
   const { data, error } = await admin.from("broadcasts").insert({ title, message }).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

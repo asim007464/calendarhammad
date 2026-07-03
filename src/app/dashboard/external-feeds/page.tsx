@@ -104,7 +104,7 @@ export default function ExternalFeedsPage() {
         ) : (
           items.map((item) => (
             <div key={item.id} className="feed-card">
-              <h4>{item.title}</h4>
+              <h4 className="no-cap">{item.title}</h4>
               <p>{item.summary}</p>
               {item.url && (
                 <a href={item.url} target="_blank" rel="noopener noreferrer" className="no-cap">

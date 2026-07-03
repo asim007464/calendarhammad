@@ -116,11 +116,11 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
               Global Amateur Radio Events
             </span>
             <h1>
-              Your Worldwide Hub For <span className="gradient-text">On-Air Activities</span>
+              Your Worldwide Hub For <span className="gradient-text">Ham Radio On-Air Activities</span>
             </h1>
             <p className="hero-lead">
-              Browse contests, special event stations, POTA &amp; SOTA activations, DXpeditions, nets and
-              field days — powered by QSO Dates.
+              Browse the amateur radio event calendar — contests, special event stations, POTA and SOTA
+              activations, DXpeditions, nets, and field days. Publish your ham radio activity on QSO Dates.
             </p>
             <div className="hero-cta">
               <button type="button" className="btn btn-primary btn-lg" onClick={() => setShowModal(true)}>
@@ -156,7 +156,7 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
         <div className="broadcast-banner" style={{ maxWidth: 1264, margin: "0 auto 16px", padding: "0 28px" }}>
           <div style={{ background: "linear-gradient(135deg, rgba(198,255,52,0.15), rgba(198,255,52,0.05))", border: "1px solid rgba(198,255,52,0.3)", borderRadius: 16, padding: "16px 20px", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div>
-              <h3>{broadcast.title}</h3>
+              <h3 className="no-cap">{broadcast.title}</h3>
               <p>{broadcast.message}</p>
             </div>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDismissedBroadcast(true)}>
@@ -302,11 +302,17 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
                       </div>
                       <div>
                         <span className="type-badge" style={{ background: colorFor(a.type_name, TYPE_COLORS) }}>{a.type_name}</span>
-                        <h3>{a.name}</h3>
+                        <h3 className="no-cap">{a.name}</h3>
                         <div className="acard-meta no-cap">{a.callsign} · {fmtUTC(a.start_at)}</div>
                       </div>
-                      {a.logo_url && (
-                        <img src={a.logo_url} alt="" width={48} height={48} style={{ borderRadius: 8, objectFit: "cover" }} />
+                      {(a.image_url || a.logo_url) && (
+                        <img
+                          src={a.image_url || a.logo_url || ""}
+                          alt=""
+                          width={48}
+                          height={48}
+                          style={{ borderRadius: 8, objectFit: "cover" }}
+                        />
                       )}
                     </div>
                   );
@@ -323,12 +329,16 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
             <div className="modal-head">
               <div>
                 <p className="modal-eyebrow">{detail.type_name}</p>
-                <h2>{detail.name}</h2>
+                <h2 className="no-cap">{detail.name}</h2>
               </div>
               <button type="button" className="icon-btn" onClick={() => setDetail(null)}>×</button>
             </div>
-            {detail.logo_url && (
-              <img src={detail.logo_url} alt={detail.name} style={{ width: "100%", maxHeight: 160, objectFit: "cover" }} />
+            {(detail.image_url || detail.logo_url) && (
+              <img
+                src={detail.image_url || detail.logo_url || ""}
+                alt={detail.name}
+                style={{ width: "100%", maxHeight: 220, objectFit: "cover" }}
+              />
             )}
             <div className="modal-body">
               <p>{detail.description}</p>

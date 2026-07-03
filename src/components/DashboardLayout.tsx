@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
+import BrandMark from "@/components/BrandMark";
 
 const NAV = [
   { href: "/dashboard", label: "Home" },
@@ -19,13 +19,8 @@ export function DashboardNav() {
       <header className="topbar">
         <div className="topbar-inner">
           <Link href="/" className="brand">
-            <span className="brand-mark">
-              <Image src="/logo.svg" alt="QSO Dates" width={44} height={44} />
-            </span>
-            <div className="brand-text">
-              <strong>QSO Dates</strong>
-              <small className="no-cap">Dashboard</small>
-            </div>
+            <BrandMark link={false} size="nav" />
+            <small className="no-cap brand-sub">Dashboard</small>
           </Link>
           <Link href="/" className="btn btn-ghost btn-sm">← Calendar</Link>
         </div>
@@ -51,13 +46,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <header className="topbar">
         <div className="topbar-inner">
           <Link href="/" className="brand">
-            <span className="brand-mark">
-              <Image src="/logo.svg" alt="QSO Dates" width={44} height={44} />
-            </span>
-            <div className="brand-text">
-              <strong>QSO Dates</strong>
-              <small className="no-cap">Dashboard</small>
-            </div>
+            <BrandMark link={false} size="nav" />
+            <small className="no-cap brand-sub">Dashboard</small>
           </Link>
           <Link href="/" className="btn btn-ghost btn-sm">← Calendar</Link>
         </div>

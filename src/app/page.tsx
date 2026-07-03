@@ -1,8 +1,19 @@
 import { HomeClient } from "@/components/HomeClient";
+import { JsonLd } from "@/components/JsonLd";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import type { Activity, ActivityType, Broadcast } from "@/types/database";
 import { TYPE_COLORS } from "@/types/database";
 import { slugify } from "@/lib/activity-utils";
+import { HOME_JSON_LD, buildPageMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Ham Radio Contest Calendar | QSO Dates",
+  description:
+    "Browse the worldwide amateur radio event calendar — ham radio contests, POTA activations, SOTA summits, DXpeditions, field days, and special event stations in UTC.",
+  path: "/",
+  keywords: ["ham radio contest calendar", "amateur radio event schedule"],
+});
 
 const DEMO_ACTIVITIES: Activity[] = [
   {
@@ -78,5 +89,10 @@ export default async function HomePage() {
     getBroadcast(),
   ]);
 
-  return <HomeClient initialActivities={activities} activityTypes={activityTypes} broadcast={broadcast} />;
+  return (
+    <>
+      <JsonLd data={HOME_JSON_LD} />
+      <HomeClient initialActivities={activities} activityTypes={activityTypes} broadcast={broadcast} />
+    </>
+  );
 }

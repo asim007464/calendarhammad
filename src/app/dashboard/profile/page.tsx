@@ -48,7 +48,7 @@ export default function ProfilePage() {
         <div className="digital-card-header">
           <div className="avatar">{initials}</div>
           <div>
-            <h2 style={{ margin: "0 0 4px" }}>{name || "Your Name"}</h2>
+            <h2 className="no-cap" style={{ margin: "0 0 4px" }}>{name || "Your Name"}</h2>
             <p className="section-sub no-cap">{callsign || "CALLSIGN"} · QSO Dates</p>
             {bio && <p style={{ marginTop: 8, fontSize: 14 }}>{bio}</p>}
           </div>

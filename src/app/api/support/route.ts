@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyAdminSession } from "@/lib/adminAuth";
 
 export async function GET() {
   const admin = createAdminClient();
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const session = await verifyAdminSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id, status, reply } = await request.json();
   const admin = createAdminClient();
   const { data, error } = await admin

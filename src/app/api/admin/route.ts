@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyAdminSession } from "@/lib/adminAuth";
 
 const SESSION_MS = 5 * 60 * 1000;
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const password = searchParams.get("password");
-
-  if (password !== process.env.ADMIN_PASSWORD && password !== "hamcaladmin") {
+  const session = await verifyAdminSession(request);
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

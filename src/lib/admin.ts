@@ -1,0 +1,31 @@
+const DEFAULT_SUPER_ADMIN_EMAILS = [
+  "asimsajjad928@gmail.com",
+  "anwaaralajme@gmail.com",
+  "hz1gv@yahoo.com",
+  "openrepater@gmail.com",
+  "openrepeater@gmail.com",
+  "sal9k2gv@yahoo.com",
+] as const;
+
+function parseEmailList(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  return raw
+    .split(/[,;\s]+/)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function getSuperAdminEmails(): string[] {
+  const fromList = parseEmailList(process.env.ADMIN_EMAILS);
+  const fromSingle = parseEmailList(process.env.ADMIN_EMAIL);
+  return Array.from(new Set([...fromList, ...fromSingle, ...DEFAULT_SUPER_ADMIN_EMAILS]));
+}
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return getSuperAdminEmails().includes(email.trim().toLowerCase());
+}
+
+export function resolveUserRole(email: string): "admin" | "member" {
+  return isAdminEmail(email) ? "admin" : "member";
+}

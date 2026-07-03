@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import type { Activity, ActivityType } from "@/types/database";
 import { BANDS, MODES } from "@/types/database";
 
@@ -9,6 +10,94 @@ interface Props {
   editing?: Activity | null;
   onClose: () => void;
   onSaved: () => void;
+}
+
+async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/activities/upload", { method: "POST", body: formData });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Upload failed.");
+  return data.url as string;
+}
+
+function ImageUploadField({
+  label,
+  hint,
+  value,
+  onChange,
+  onError,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (url: string) => void;
+  onError: (msg: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    onError("");
+    try {
+      const url = await uploadImage(file);
+      onChange(url);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="field">
+      <span>{label}</span>
+      {hint && <p className="hint no-cap" style={{ margin: "0 0 8px" }}>{hint}</p>}
+      {value ? (
+        <div className="image-upload-preview">
+          <img src={value} alt="Preview" className="image-upload-thumb" />
+          <div className="image-upload-actions">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
+              Replace
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange("")} disabled={uploading}>
+              <X size={14} /> Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="image-upload-drop"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <>
+              <Loader2 size={20} className="spin" />
+              Uploading…
+            </>
+          ) : (
+            <>
+              <ImagePlus size={22} />
+              <span>Click to upload image</span>
+              <small className="no-cap">JPEG, PNG, WebP or GIF · max 5 MB</small>
+            </>
+          )}
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
+      />
+    </div>
+  );
 }
 
 export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Props) {
@@ -20,6 +109,8 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
       : []
   );
   const [newType, setNewType] = useState("");
+  const [imageUrl, setImageUrl] = useState(editing?.image_url || "");
+  const [logoUrl, setLogoUrl] = useState(editing?.logo_url || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,7 +150,8 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
       website: fd.get("website"),
       notes: fd.get("notes"),
       custom_fields: cf,
-      logo_url: fd.get("logo_url") || null,
+      logo_url: logoUrl || fd.get("logo_url") || null,
+      image_url: imageUrl || null,
     };
 
     const url = editing ? `/api/activities/${editing.id}` : "/api/activities";
@@ -104,12 +196,20 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
         <div className="modal-head">
           <div>
             <p className="modal-eyebrow">{editing ? "Edit" : "New submission"}</p>
-            <h2>{editing ? "Edit Activity" : "Add An Activity"}</h2>
+            <h2>{editing ? "Edit Activity" : "Add Activity"}</h2>
           </div>
           <button type="button" className="icon-btn" onClick={onClose}>×</button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
+            <ImageUploadField
+              label="Activity Image"
+              hint="Banner or photo shown on the activity detail page."
+              value={imageUrl}
+              onChange={setImageUrl}
+              onError={setError}
+            />
+
             <div className="grid2">
               <label className="field">
                 <span>Activity Name *</span>
@@ -185,9 +285,23 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
                 <input name="grid" className="no-cap" defaultValue={editing?.grid} />
               </label>
             </div>
+
+            <ImageUploadField
+              label="Activity Logo (optional)"
+              hint="Small logo or icon for list views."
+              value={logoUrl}
+              onChange={setLogoUrl}
+              onError={setError}
+            />
             <label className="field">
-              <span>Activity Logo URL</span>
-              <input name="logo_url" className="no-cap" placeholder="https://…" defaultValue={editing?.logo_url || ""} />
+              <span>Or Logo URL</span>
+              <input
+                name="logo_url"
+                className="no-cap"
+                placeholder="https://…"
+                defaultValue={editing?.logo_url && !logoUrl ? editing.logo_url : ""}
+                onChange={(e) => { if (e.target.value.trim()) setLogoUrl(e.target.value.trim()); }}
+              />
             </label>
             <label className="field">
               <span>Website</span>
