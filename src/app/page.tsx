@@ -1,5 +1,5 @@
 import { HomeClient } from "@/components/HomeClient";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import type { Activity, ActivityType, Broadcast } from "@/types/database";
 import { TYPE_COLORS } from "@/types/database";
 import { slugify } from "@/lib/activity-utils";
@@ -30,6 +30,7 @@ const DEFAULT_TYPES: ActivityType[] = Object.keys(TYPE_COLORS).map((name) => ({
 }));
 
 async function getActivities(): Promise<Activity[]> {
+  if (!isSupabaseConfigured()) return DEMO_ACTIVITIES;
   try {
     const supabase = await createClient();
     const { data } = await supabase
@@ -44,6 +45,7 @@ async function getActivities(): Promise<Activity[]> {
 }
 
 async function getActivityTypes(): Promise<ActivityType[]> {
+  if (!isSupabaseConfigured()) return DEFAULT_TYPES;
   try {
     const supabase = await createClient();
     const { data } = await supabase.from("activity_types").select("*").order("name");
@@ -54,6 +56,7 @@ async function getActivityTypes(): Promise<ActivityType[]> {
 }
 
 async function getBroadcast(): Promise<Broadcast | null> {
+  if (!isSupabaseConfigured()) return null;
   try {
     const supabase = await createClient();
     const { data } = await supabase
