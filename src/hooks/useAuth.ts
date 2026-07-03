@@ -77,14 +77,13 @@ export function useAuth() {
   }, []);
 
   const isSuperAdmin = isAdminEmail(user?.email) || isAdminEmail(profile?.email);
-  const isAdmin = isSuperAdmin || profile?.role === "admin";
-  const canAccessAdmin = isAdmin;
+  const canAccessAdmin = isSuperAdmin;
 
   return {
     user,
     profile,
     loading,
-    isAdmin,
+    isAdmin: canAccessAdmin,
     isSuperAdmin,
     canAccessAdmin,
     isLoggedIn: !!user,

@@ -3,14 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import BrandMark from "@/components/BrandMark";
+import { useAuth } from "@/hooks/useAuth";
 
 const NAV = [
   { href: "/dashboard", label: "Home" },
   { href: "/dashboard/profile", label: "Edit Profile" },
   { href: "/dashboard/external-feeds", label: "External Feeds" },
   { href: "/dashboard/analytics", label: "Analytics" },
-  { href: "/admin", label: "Admin" },
-];
+  { href: "/admin", label: "Admin", adminOnly: true },
+] as const;
+
+function DashboardNavLinks({ path }: { path: string }) {
+  const { canAccessAdmin, loading } = useAuth();
+  const items = NAV.filter((item) => !item.adminOnly || (!loading && canAccessAdmin));
+
+  return items.map((item) => (
+    <Link key={item.href} href={item.href} className={path === item.href ? "active" : ""}>
+      {item.label}
+    </Link>
+  ));
+}
 
 export function DashboardNav() {
   const path = usePathname();
@@ -28,11 +40,7 @@ export function DashboardNav() {
       <div className="dashboard-shell">
         <nav className="dash-nav">
           <h3>Menu</h3>
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className={path === item.href ? "active" : ""}>
-              {item.label}
-            </Link>
-          ))}
+          <DashboardNavLinks path={path} />
         </nav>
       </div>
     </>
@@ -55,11 +63,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="dashboard-shell">
         <nav className="dash-nav">
           <h3>Menu</h3>
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className={path === item.href ? "active" : ""}>
-              {item.label}
-            </Link>
-          ))}
+          <DashboardNavLinks path={path} />
         </nav>
         <div className="dash-content">{children}</div>
       </div>

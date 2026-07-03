@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
+import { AdminNavLink } from "@/components/AdminNavLink";
 import { SOCIAL_LINKS } from "@/types/database";
 
 export function Footer() {
@@ -38,15 +39,18 @@ export function Footer() {
             <li><Link href="/">Calendar</Link></li>
             <li><Link href="/dashboard">Dashboard</Link></li>
             <li><Link href="/dashboard/external-feeds">External Feeds</Link></li>
-            <li><Link href="/admin">Admin</Link></li>
+            <li><AdminNavLink /></li>
+            <li><a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">GitHub</a></li>
           </ul>
         </div>
         <div className="footer-col">
-          <h4>Resources</h4>
+          <h4>Legal</h4>
           <ul>
-            <li><a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">GitHub</a></li>
-            <li><Link href="/dashboard/analytics">Analytics</Link></li>
-            <li><a href="https://www.openrepeater.org" target="_blank" rel="noopener noreferrer">OpenRepeater</a></li>
+            <li><Link href="/about">About</Link></li>
+            <li><Link href="/terms">Terms of Service</Link></li>
+            <li><Link href="/privacy">Privacy Policy</Link></li>
+            <li><Link href="/content-agreement">Content Submission</Link></li>
+            <li><Link href="/api-policy">API Policy</Link></li>
           </ul>
         </div>
         <div className="footer-col">

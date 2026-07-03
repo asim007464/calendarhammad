@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Download, Share, Smartphone, X } from "lucide-react";
 import {
   type BeforeInstallPromptEvent,
@@ -14,14 +15,49 @@ interface InstallAppButtonProps {
   variant?: "button" | "card";
 }
 
+function InstallHelpModal({ onClose, ios }: { onClose: () => void; ios: boolean }) {
+  return createPortal(
+    <div className="install-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="panel install-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="install-modal-head">
+          <h2>{ios ? "Add to Home Screen" : "Install QSO Dates"}</h2>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close">
+            <X size={16} />
+          </button>
+        </div>
+        {ios ? (
+          <ol className="ios-steps">
+            <li>Open this page in <strong>Safari</strong>.</li>
+            <li>Tap <Share size={14} className="inline-icon" /> <strong>Share</strong>.</li>
+            <li>Tap <strong>Add to Home Screen</strong>.</li>
+            <li>Tap <strong>Add</strong> — QSO Dates appears on your home screen.</li>
+          </ol>
+        ) : (
+          <ol className="ios-steps">
+            <li>Open <strong>qsodates.com</strong> in <strong>Chrome</strong> on your phone.</li>
+            <li>Tap the browser menu (⋮) in the top right.</li>
+            <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+            <li>Confirm — QSO Dates will appear on your home screen.</li>
+          </ol>
+        )}
+        <button type="button" className="btn btn-primary" style={{ marginTop: 16, width: "100%" }} onClick={onClose}>
+          Got it
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function InstallAppButton({ className = "", variant = "button" }: InstallAppButtonProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
-  const [iosHintOpen, setIosHintOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [installing, setInstalling] = useState(false);
-  const [message, setMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setInstalled(isStandaloneApp());
 
     function onBeforeInstall(event: Event) {
@@ -32,7 +68,7 @@ export default function InstallAppButton({ className = "", variant = "button" }:
     function onAppInstalled() {
       setInstalled(true);
       setDeferredPrompt(null);
-      setMessage("App installed — open it from your home screen.");
+      setHelpOpen(false);
     }
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -44,29 +80,29 @@ export default function InstallAppButton({ className = "", variant = "button" }:
   }, []);
 
   const canNativeInstall = Boolean(deferredPrompt);
-  const showOnMobile = isMobileDevice() || canNativeInstall;
+  const showButton = variant === "card" || isMobileDevice() || canNativeInstall;
 
   const handleInstall = useCallback(async () => {
-    setMessage("");
-    if (isIosDevice()) {
-      setIosHintOpen(true);
+    if (installed) return;
+
+    if (canNativeInstall && deferredPrompt) {
+      setInstalling(true);
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          setDeferredPrompt(null);
+        }
+      } catch {
+        setHelpOpen(true);
+      } finally {
+        setInstalling(false);
+      }
       return;
     }
-    if (!deferredPrompt) {
-      setMessage("Open in Chrome on your phone, then tap Install app from the browser menu.");
-      return;
-    }
-    setInstalling(true);
-    try {
-      await deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      setDeferredPrompt(null);
-    } catch {
-      setMessage("Could not start install. Try Add to Home screen from your browser menu.");
-    } finally {
-      setInstalling(false);
-    }
-  }, [deferredPrompt]);
+
+    setHelpOpen(true);
+  }, [installed, canNativeInstall, deferredPrompt]);
 
   if (installed) {
     if (variant === "card") {
@@ -83,32 +119,23 @@ export default function InstallAppButton({ className = "", variant = "button" }:
     return null;
   }
 
-  if (!showOnMobile && variant === "button") return null;
+  if (!showButton) return null;
 
-  const btnClass = variant === "card" ? "btn btn-primary" : "btn btn-ghost btn-sm";
+  const btnClass = variant === "card" ? "btn btn-primary install-card-btn" : "btn btn-ghost btn-sm";
 
   return (
     <>
-      <button type="button" onClick={() => void handleInstall()} disabled={installing} className={`${btnClass} ${className}`}>
+      <button
+        type="button"
+        onClick={() => void handleInstall()}
+        disabled={installing}
+        className={`${btnClass} ${className}`.trim()}
+      >
         <Download size={15} aria-hidden />
         {installing ? "Installing…" : "Install App"}
       </button>
-      {message && <p className="hint">{message}</p>}
-      {iosHintOpen && (
-        <div className="modal-backdrop" onClick={() => setIosHintOpen(false)} role="dialog" aria-modal="true">
-          <div className="panel modal-panel" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-              <h2>Add to Home Screen</h2>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIosHintOpen(false)}><X size={16} /></button>
-            </div>
-            <ol className="ios-steps">
-              <li>Open this page in <strong>Safari</strong>.</li>
-              <li>Tap <Share size={14} className="inline-icon" /> <strong>Share</strong>.</li>
-              <li>Tap <strong>Add to Home Screen</strong>.</li>
-              <li>Tap <strong>Add</strong> — QSO Dates appears on your home screen.</li>
-            </ol>
-          </div>
-        </div>
+      {mounted && helpOpen && (
+        <InstallHelpModal onClose={() => setHelpOpen(false)} ios={isIosDevice()} />
       )}
     </>
   );

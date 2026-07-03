@@ -126,7 +126,12 @@ export default function RegisterPage() {
           </label>
           <label className="auth-checkbox">
             <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
-            <span>I agree to the terms of use</span>
+            <span>
+              I agree to the{" "}
+              <Link href="/terms" target="_blank">Terms of Service</Link>,{" "}
+              <Link href="/privacy" target="_blank">Privacy Policy</Link>, and{" "}
+              <Link href="/content-agreement" target="_blank">Content Submission Agreement</Link>
+            </span>
           </label>
           <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
             {loading ? <Loader2 size={15} className="spin" /> : null}

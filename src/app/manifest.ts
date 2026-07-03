@@ -17,6 +17,8 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: PWA_THEME_COLOR,
     categories: ["utilities", "productivity"],
     icons: [
+      { src: "/icon.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/favicon.png", sizes: "32x32", type: "image/png", purpose: "any" },
       { src: "/27278978-1eed-4655-8c89-ecc9590e1f1f.png", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/27278978-1eed-4655-8c89-ecc9590e1f1f.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],

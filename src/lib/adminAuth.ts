@@ -43,22 +43,17 @@ export async function verifyAdminSession(request: Request): Promise<AdminSession
     .maybeSingle();
 
   const isSuperAdmin = isAdminEmail(user.email) || isAdminEmail(profile?.email);
+  if (!isSuperAdmin) return null;
 
-  if (!isSuperAdmin && profile?.is_blocked) return null;
+  if (profile?.is_blocked) return null;
 
   if (!profile) {
-    if (isSuperAdmin) {
-      return {
-        user,
-        profile: { id: user.id, role: "admin", email: user.email!, name: "" },
-        isSuperAdmin: true,
-      };
-    }
-    return null;
+    return {
+      user,
+      profile: { id: user.id, role: "admin", email: user.email!, name: "" },
+      isSuperAdmin: true,
+    };
   }
-
-  const isAdmin = isSuperAdmin || profile.role === "admin";
-  if (!isAdmin) return null;
 
   return {
     user,

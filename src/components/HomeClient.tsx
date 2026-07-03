@@ -8,6 +8,7 @@ import { Topbar } from "@/components/Topbar";
 import { Footer } from "@/components/Footer";
 import { ActivityModal } from "@/components/ActivityModal";
 import { SupportModal } from "@/components/SupportModal";
+import { AdminNavLink } from "@/components/AdminNavLink";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -35,6 +36,7 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
   const [detail, setDetail] = useState<Activity | null>(null);
   const [dismissedBroadcast, setDismissedBroadcast] = useState(false);
   const [toast, setToast] = useState("");
+  const [mobileCalOpen, setMobileCalOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/activities");
@@ -76,6 +78,58 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
     return days;
   }, [viewDate]);
 
+  const monthAgenda = useMemo(() => {
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    const dim = new Date(y, m + 1, 0).getDate();
+    const rows: { date: Date; activities: Activity[] }[] = [];
+    for (let d = 1; d <= dim; d++) {
+      const date = new Date(y, m, d);
+      const dayActs = filtered.filter((a) => activityOnDay(a, date));
+      if (dayActs.length > 0) rows.push({ date, activities: dayActs });
+    }
+    return rows;
+  }, [viewDate, filtered]);
+
+  const openMobileCalendar = () => {
+    setView("calendar");
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+      setMobileCalOpen(true);
+    }
+  };
+
+  const renderCalendarGrid = (compact?: boolean) => (
+    <>
+      <div className="cal-grid weekdays">
+        {WEEKDAYS.map((d) => <span key={d}>{d}</span>)}
+      </div>
+      <div className="cal-grid">
+        {calDays.map(({ date, inMonth }, i) => {
+          const today = new Date();
+          const isToday = date.toDateString() === today.toDateString();
+          const dayActs = filtered.filter((a) => activityOnDay(a, date));
+          const maxEvts = compact ? 2 : 3;
+          return (
+            <div key={i} className={`cal-cell ${!inMonth ? "other" : ""} ${isToday ? "today" : ""}`}>
+              <div className="daynum">{date.getDate()}</div>
+              {dayActs.slice(0, maxEvts).map((a) => (
+                <div
+                  key={a.id}
+                  className="evt"
+                  style={{ background: colorFor(a.type_name, TYPE_COLORS) }}
+                  onClick={() => openDetail(a)}
+                  title={a.name}
+                >
+                  {a.name}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(""), 3000);
@@ -90,9 +144,17 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
   };
 
   const openDetail = (a: Activity) => {
+    setMobileCalOpen(false);
     setDetail(a);
     logView(a.id);
   };
+
+  useEffect(() => {
+    if (!mobileCalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [mobileCalOpen]);
 
   useEffect(() => {
     const interval = setInterval(refresh, 60000);
@@ -175,7 +237,7 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
                 <span className="eyebrow" style={{ margin: 0, fontSize: 10 }}>
                   <span className="pulse-dot" style={{ width: 6, height: 6 }} /> Live
                 </span>
-                <a href="/admin" className="panel-admin-link">Admin</a>
+                <AdminNavLink className="panel-admin-link" />
               </div>
             </div>
             <div className="mini-list">
@@ -194,7 +256,7 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
           <div className="panel">
             <div className="panel-head">
               <h3>Coming Up</h3>
-              <a href="/admin" className="panel-admin-link">Admin</a>
+              <AdminNavLink className="panel-admin-link" />
             </div>
             <div className="mini-list">
               {upcoming.map((a) => (
@@ -207,7 +269,7 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
           </div>
         </aside>
 
-        <main>
+        <main className="page-main">
           <section className="panel toolbar">
             <div className="toolbar-top">
               <div>
@@ -215,8 +277,19 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
                 <p className="section-sub">All times displayed in UTC</p>
               </div>
               <div className="toolbar-actions-row">
-                <a href="/admin" className="panel-admin-link">Admin</a>
-                <button type="button" className={`toggle-btn ${view === "calendar" ? "active" : ""}`} onClick={() => setView("calendar")}>Month</button>
+                <AdminNavLink className="panel-admin-link" />
+                <button
+                  type="button"
+                  className={`toggle-btn ${view === "calendar" ? "active" : ""}`}
+                  onClick={() => {
+                    if (view !== "calendar") setView("calendar");
+                    else if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+                      setMobileCalOpen(true);
+                    }
+                  }}
+                >
+                  Month
+                </button>
                 <button type="button" className={`toggle-btn ${view === "list" ? "active" : ""}`} onClick={() => setView("list")}>List</button>
               </div>
             </div>
@@ -243,43 +316,69 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
           </section>
 
           {view === "calendar" ? (
-            <section className="panel">
+            <section className="panel cal-panel">
               <div className="cal-header">
                 <div className="cal-nav">
                   <button type="button" className="icon-btn" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}>‹</button>
-                  <h2>{MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}</h2>
+                  <button
+                    type="button"
+                    className="cal-month-title mobile-only"
+                    onClick={openMobileCalendar}
+                    aria-label="Open full calendar"
+                  >
+                    {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
+                  </button>
+                  <h2 className="desktop-only">{MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}</h2>
                   <button type="button" className="icon-btn" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}>›</button>
                 </div>
                 <div className="cal-header-actions">
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setViewDate(new Date())}>Today</button>
-                  <a href="/admin" className="panel-admin-link">Admin</a>
+                  <button type="button" className="btn btn-outline btn-sm mobile-only" onClick={openMobileCalendar}>
+                    Full calendar
+                  </button>
+                  <AdminNavLink className="panel-admin-link" />
                 </div>
               </div>
-              <div className="cal-grid weekdays">
-                {WEEKDAYS.map((d) => <span key={d}>{d}</span>)}
+
+              <div className="cal-desktop-only">
+                <div className="cal-scroll-wrap">
+                  <div className="cal-scroll-inner">
+                    {renderCalendarGrid()}
+                  </div>
+                </div>
               </div>
-              <div className="cal-grid">
-                {calDays.map(({ date, inMonth }, i) => {
-                  const today = new Date();
-                  const isToday = date.toDateString() === today.toDateString();
-                  const dayActs = filtered.filter((a) => activityOnDay(a, date));
-                  return (
-                    <div key={i} className={`cal-cell ${!inMonth ? "other" : ""} ${isToday ? "today" : ""}`}>
-                      <div className="daynum">{date.getDate()}</div>
-                      {dayActs.slice(0, 3).map((a) => (
-                        <div
-                          key={a.id}
-                          className="evt"
-                          style={{ background: colorFor(a.type_name, TYPE_COLORS) }}
-                          onClick={() => openDetail(a)}
-                          title={a.name}
-                        >
-                          {a.name}
+
+              <div className="cal-mobile-agenda mobile-only">
+                {monthAgenda.length === 0 ? (
+                  <p className="cal-agenda-empty">No events this month. Tap the month name or Full calendar to browse dates.</p>
+                ) : (
+                  monthAgenda.map(({ date, activities }) => {
+                    const today = new Date();
+                    const isToday = date.toDateString() === today.toDateString();
+                    return (
+                      <div key={date.toISOString()} className={`cal-agenda-row ${isToday ? "today" : ""}`}>
+                        <div className="cal-agenda-date">
+                          <span className="cal-agenda-wd">{WEEKDAYS[(date.getDay() + 6) % 7]}</span>
+                          <span className="cal-agenda-day">{date.getDate()}</span>
                         </div>
-                      ))}
-                    </div>
-                  );
-                })}
+                        <div className="cal-agenda-events">
+                          {activities.map((a) => (
+                            <button
+                              key={a.id}
+                              type="button"
+                              className="cal-agenda-evt"
+                              style={{ borderLeftColor: colorFor(a.type_name, TYPE_COLORS) }}
+                              onClick={() => openDetail(a)}
+                            >
+                              <span className="cal-agenda-evt-name no-cap">{a.name}</span>
+                              <span className="cal-agenda-evt-meta no-cap">{a.type_name}{a.callsign ? ` · ${a.callsign}` : ""}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </section>
           ) : (
@@ -289,7 +388,7 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
                   <h3 className="section-title" style={{ fontSize: 18 }}>All Activities</h3>
                   <p className="section-sub">{filtered.length} activities</p>
                 </div>
-                <a href="/admin" className="panel-admin-link">Admin</a>
+                <AdminNavLink className="panel-admin-link" />
               </div>
               <div className="activity-list">
                 {filtered.map((a) => {
@@ -322,6 +421,30 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
           )}
         </main>
       </div>
+
+      {mobileCalOpen && (
+        <div className="cal-fullscreen-overlay" onClick={() => setMobileCalOpen(false)}>
+          <div className="cal-fullscreen" onClick={(e) => e.stopPropagation()}>
+            <div className="cal-fullscreen-head">
+              <div className="cal-nav">
+                <button type="button" className="icon-btn" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}>‹</button>
+                <h2>{MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}</h2>
+                <button type="button" className="icon-btn" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}>›</button>
+              </div>
+              <div className="cal-header-actions">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setViewDate(new Date())}>Today</button>
+                <button type="button" className="icon-btn" onClick={() => setMobileCalOpen(false)} aria-label="Close calendar">×</button>
+              </div>
+            </div>
+            <p className="cal-scroll-hint">Swipe sideways to view all days</p>
+            <div className="cal-scroll-wrap">
+              <div className="cal-scroll-inner">
+                {renderCalendarGrid(true)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {detail && (
         <div className="modal-overlay" onClick={() => setDetail(null)}>
