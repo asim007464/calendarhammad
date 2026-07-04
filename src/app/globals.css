@@ -671,6 +671,13 @@ a { color: var(--brand-light); }
   text-decoration: none;
 }
 .social-btn:hover { border-color: var(--brand); color: var(--text); }
+.social-btn-icon-only {
+  padding: 8px 10px;
+  color: #25D366;
+}
+.footer-tagline {
+  text-transform: capitalize;
+}
 
 .broadcast-banner {
   max-width: 1264px;

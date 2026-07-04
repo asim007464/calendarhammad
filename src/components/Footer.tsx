@@ -2,7 +2,16 @@ import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { AdminNavLink } from "@/components/AdminNavLink";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
+import { FacebookIcon, GithubIcon, InstagramIcon, XIcon } from "@/components/SocialIcons";
 import { SOCIAL_LINKS } from "@/types/database";
+
+const SOCIAL_ITEMS = [
+  { href: SOCIAL_LINKS.github, label: "GitHub", icon: <GithubIcon size={16} /> },
+  { href: SOCIAL_LINKS.facebook, label: "Facebook", icon: <FacebookIcon size={16} /> },
+  { href: SOCIAL_LINKS.instagram, label: "Instagram", icon: <InstagramIcon size={16} /> },
+  { href: SOCIAL_LINKS.x, label: "X", icon: <XIcon size={16} /> },
+  { href: SOCIAL_LINKS.whatsapp, label: "WhatsApp", icon: <WhatsAppIcon size={16} />, iconOnly: true as const },
+];
 
 export function Footer() {
   return (
@@ -12,32 +21,25 @@ export function Footer() {
           <Link href="/" className="brand-mark-link footer-logo" aria-label="QSO Dates home">
             <LogoWordmark size="footer" />
           </Link>
-          <p>
-            Your worldwide hub for amateur radio activities — ham radio contests, special event stations,
-            POTA, SOTA, DXpeditions, nets, and field days.
+          <p className="footer-tagline">
+            Your Worldwide Hub For Amateur Radio Activities — Ham Radio Contests, Special Event Stations,{" "}
+            <span className="no-cap">POTA</span>, <span className="no-cap">SOTA</span>, DXpeditions, Nets, And Field Days.
           </p>
           <div className="social-row">
-            <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" className="social-btn">
-              GitHub
-            </a>
-            <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" className="social-btn">
-              Facebook
-            </a>
-            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="social-btn">
-              Instagram
-            </a>
-            <a href={SOCIAL_LINKS.x} target="_blank" rel="noopener noreferrer" className="social-btn">
-              X
-            </a>
-            <a
-              href={SOCIAL_LINKS.whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-btn social-btn-icon"
-              aria-label="Chat on WhatsApp"
-            >
-              <WhatsAppIcon size={18} />
-            </a>
+            {SOCIAL_ITEMS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`social-btn${"iconOnly" in item && item.iconOnly ? " social-btn-icon-only" : ""}`}
+                aria-label={item.label}
+                title={item.label}
+              >
+                {item.icon}
+                {!("iconOnly" in item && item.iconOnly) && <span>{item.label}</span>}
+              </a>
+            ))}
           </div>
         </div>
         <div className="footer-col">
