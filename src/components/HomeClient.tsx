@@ -277,9 +277,14 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
             </div>
             <div className="mini-list">
               {upcoming.map((a) => (
-                <div key={a.id} className="mini-item" onClick={() => openDetail(a)}>
+                <div key={a.id} className="mini-item mini-item-row" onClick={() => openDetail(a)}>
                   <strong>{a.name}</strong>
-                  <span className="no-cap">{fmtUTC(a.start_at)}</span>
+                  <div className="mini-item-dates no-cap">
+                    <span>{fmtUTC(a.start_at)}</span>
+                    {a.end_at && (
+                      <span className="mini-date-end">{fmtUTC(a.end_at)}</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
