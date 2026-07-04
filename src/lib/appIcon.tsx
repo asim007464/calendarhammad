@@ -17,6 +17,7 @@ async function loadOrbitronBlack(): Promise<ArrayBuffer> {
 
 export async function generateAppIcon(size: number) {
   const fontData = await loadOrbitronBlack();
+  const pad = Math.round(size * 0.12);
 
   return new ImageResponse(
     (
@@ -28,10 +29,12 @@ export async function generateAppIcon(size: number) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          padding: pad,
           fontFamily: "Orbitron",
           fontWeight: 900,
-          fontSize: Math.round(size * 0.34),
-          letterSpacing: Math.round(size * 0.04),
+          fontSize: Math.round(size * 0.24),
+          letterSpacing: Math.round(size * 0.03),
+          lineHeight: 1.15,
           color: APP_ICON_COLOR,
         }}
       >

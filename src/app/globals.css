@@ -901,13 +901,14 @@ a { color: var(--brand-light); }
 .pw-checks li.ok { color: var(--brand-light); }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.brand-mark-link { display: inline-flex; text-decoration: none; align-items: center; }
+.brand-mark-link { display: inline-flex; text-decoration: none; align-items: center; overflow: visible; min-height: 0; }
 .brand-sub { font-size: 11px; color: var(--text-muted); margin-left: 10px; }
 
 /* QSO DATES text wordmark — Orbitron, site lime, no shadow */
 .site-wordmark {
   display: inline-block;
-  line-height: 1;
+  line-height: 1.2;
+  padding: 2px 0;
   font-family: var(--font-display), var(--sans);
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -915,8 +916,9 @@ a { color: var(--brand-light); }
   white-space: nowrap;
   color: var(--brand-light);
   user-select: none;
+  overflow: visible;
 }
-.site-wordmark--nav { font-size: clamp(14px, 1.8vw, 18px); letter-spacing: 0.1em; }
+.site-wordmark--nav { font-size: clamp(12px, 3.2vw, 18px); letter-spacing: 0.08em; }
 .site-wordmark--auth { font-size: clamp(16px, 2.2vw, 22px); letter-spacing: 0.11em; }
 .site-wordmark--hero { font-size: clamp(22px, 3.5vw, 32px); letter-spacing: 0.12em; }
 .site-wordmark--footer { font-size: clamp(14px, 2vw, 18px); letter-spacing: 0.1em; }
@@ -1273,6 +1275,8 @@ a { color: var(--brand-light); }
 
 @media (max-width: 720px) {
   .topbar-inner { padding: 10px 12px; }
+  .site-wordmark--nav { font-size: 11px; letter-spacing: 0.06em; }
+  .site-wordmark--footer { font-size: 12px; letter-spacing: 0.06em; }
   .grid2 { grid-template-columns: 1fr; }
   .footer-inner { grid-template-columns: 1fr; gap: 24px; }
   .acard { grid-template-columns: 72px 1fr; }
