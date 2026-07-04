@@ -53,13 +53,21 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "You must be signed in to publish an activity." },
+        { status: 401 }
+      );
+    }
+
     const admin = createAdminClient();
 
     const { data, error } = await admin
       .from("activities")
       .insert({
         ...body,
-        user_id: user?.id || null,
+        user_id: user.id,
         status: "published",
       })
       .select()

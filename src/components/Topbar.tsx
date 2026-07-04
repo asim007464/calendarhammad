@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import InstallAppButton from "@/components/InstallAppButton";
@@ -13,9 +14,11 @@ interface TopbarProps {
   onViewChange?: (v: "calendar" | "list") => void;
   onAddActivity?: () => void;
   onSupport?: () => void;
+  onLoginRequired?: () => void;
 }
 
-export function Topbar({ currentView, onViewChange, onAddActivity, onSupport }: TopbarProps) {
+export function Topbar({ currentView, onViewChange, onAddActivity, onSupport, onLoginRequired }: TopbarProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { isLoggedIn, canAccessAdmin, loading } = useAuth();
@@ -44,6 +47,21 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport }: 
 
   const closeMenu = () => setMenuOpen(false);
 
+  const goToLogin = () => {
+    closeMenu();
+    onLoginRequired?.();
+    router.push("/login?next=/");
+  };
+
+  const handleAddActivity = () => {
+    if (!isLoggedIn) {
+      goToLogin();
+      return;
+    }
+    closeMenu();
+    onAddActivity?.();
+  };
+
   const mobileMenu = menuOpen && mounted
     ? createPortal(
         <>
@@ -71,16 +89,28 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport }: 
               <Link href="/api-docs" className="nav-link" onClick={closeMenu}>API Portal</Link>
               <Link href="/downloads" className="nav-link" onClick={closeMenu}>Downloads</Link>
               <Link href="/contact" className="nav-link" onClick={closeMenu}>Contact</Link>
-              {isLoggedIn ? (
+              {isLoggedIn && (
                 <Link href="/dashboard" className="nav-link" onClick={closeMenu}>Account</Link>
-              ) : (
-                <Link href="/login" className="nav-link" onClick={closeMenu}>Sign In</Link>
               )}
             </nav>
             <div className="mobile-drawer-actions">
               <InstallAppButton variant="card" />
+              {!loading && !isLoggedIn && (
+                <>
+                  <Link href="/login?next=/" className="btn btn-primary" onClick={closeMenu}>
+                    Sign In
+                  </Link>
+                  <Link href="/register?next=/" className="btn btn-outline" onClick={closeMenu}>
+                    Register Free
+                  </Link>
+                </>
+              )}
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => { onSupport?.(); closeMenu(); }}>Support</button>
-              <button type="button" className="btn btn-primary" onClick={() => { onAddActivity?.(); closeMenu(); }}>Add Activity</button>
+              {isLoggedIn ? (
+                <button type="button" className="btn btn-primary" onClick={handleAddActivity}>Add Activity</button>
+              ) : (
+                <button type="button" className="btn btn-primary" onClick={goToLogin}>Sign In to Add Activity</button>
+              )}
             </div>
           </div>
         </>,
@@ -125,9 +155,14 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport }: 
             {isLoggedIn ? (
               <Link href="/dashboard" className="btn btn-ghost btn-sm">Account</Link>
             ) : (
-              <Link href="/login" className="btn btn-ghost btn-sm">Sign In</Link>
+              <>
+                <Link href="/login?next=/" className="btn btn-ghost btn-sm">Sign In</Link>
+                <Link href="/register?next=/" className="btn btn-ghost btn-sm">Register</Link>
+              </>
             )}
-            <button type="button" className="btn btn-primary btn-sm" onClick={onAddActivity}>Add Activity</button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={handleAddActivity}>
+              {isLoggedIn ? "Add Activity" : "Sign In to Add"}
+            </button>
           </div>
 
           <button

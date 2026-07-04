@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 const BUCKET = "activity-images";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -17,6 +18,12 @@ function extForMime(mime: string): string {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "You must be signed in to upload images." }, { status: 401 });
+    }
+
     const form = await request.formData();
     const file = form.get("file");
 

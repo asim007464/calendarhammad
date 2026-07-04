@@ -9,6 +9,8 @@ import { Footer } from "@/components/Footer";
 import { ActivityModal } from "@/components/ActivityModal";
 import { SupportModal } from "@/components/SupportModal";
 import { AdminNavLink } from "@/components/AdminNavLink";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -23,6 +25,8 @@ interface Props {
 }
 
 export function HomeClient({ initialActivities, activityTypes, broadcast }: Props) {
+  const router = useRouter();
+  const { isLoggedIn, loading: authLoading } = useAuth();
   const [activities, setActivities] = useState(initialActivities);
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [viewDate, setViewDate] = useState(new Date());
@@ -135,6 +139,16 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
     setTimeout(() => setToast(""), 3000);
   };
 
+  const openAddActivity = () => {
+    if (!isLoggedIn) {
+      showToast("Please sign in to publish an activity.");
+      router.push("/login?next=/");
+      return;
+    }
+    setEditing(null);
+    setShowModal(true);
+  };
+
   const logView = async (id: string) => {
     await fetch(`/api/activities/${id}/log`, {
       method: "POST",
@@ -166,8 +180,9 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
       <Topbar
         currentView={view}
         onViewChange={setView}
-        onAddActivity={() => { setEditing(null); setShowModal(true); }}
+        onAddActivity={openAddActivity}
         onSupport={() => setShowSupport(true)}
+        onLoginRequired={() => showToast("Please sign in to publish an activity.")}
       />
 
       <section className="hero">
@@ -185,8 +200,8 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
               activations, DXpeditions, nets, and field days. Publish your ham radio activity on QSO Dates.
             </p>
             <div className="hero-cta">
-              <button type="button" className="btn btn-primary btn-lg" onClick={() => setShowModal(true)}>
-                Publish Your Activity
+              <button type="button" className="btn btn-primary btn-lg" onClick={openAddActivity}>
+                {authLoading ? "Publish Your Activity" : isLoggedIn ? "Publish Your Activity" : "Sign In to Publish"}
               </button>
               <button type="button" className="btn btn-outline btn-lg" onClick={() => setView("list")}>
                 Browse Events

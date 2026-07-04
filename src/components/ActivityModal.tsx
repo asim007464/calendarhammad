@@ -161,10 +161,16 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
       });
 
       const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        setError("You must be signed in to publish an activity.");
+        return;
+      }
 
       if (newType.trim() && res.ok) {
         await fetch("/api/activity-types", {
