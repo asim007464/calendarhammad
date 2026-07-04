@@ -916,6 +916,22 @@ a { color: var(--brand-light); }
   text-decoration: none;
 }
 .footer-wa-link:hover { color: var(--brand-light); }
+.footer-wa-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #fff;
+  margin-top: 4px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.footer-wa-logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(37, 211, 102, 0.45);
+}
 .social-btn-icon {
   padding: 8px 10px;
   color: #25D366;

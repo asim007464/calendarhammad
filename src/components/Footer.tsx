@@ -76,14 +76,13 @@ export function Footer() {
                 href={SOCIAL_LINKS.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="footer-wa-link"
+                className="footer-wa-logo"
                 aria-label="Chat on WhatsApp"
               >
-                <WhatsAppIcon size={18} />
-                <span>WhatsApp</span>
+                <WhatsAppIcon size={28} />
               </a>
             </li>
-            <li><a href={SOCIAL_LINKS.site}>www.qsodates.com</a></li>
+            <li><a href={SOCIAL_LINKS.site} className="no-cap">www.qsodates.com</a></li>
           </ul>
         </div>
       </div>
