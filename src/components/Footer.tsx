@@ -45,7 +45,6 @@ export function Footer() {
           <ul>
             <li><Link href="/">Calendar</Link></li>
             <li><Link href="/dashboard">Profile</Link></li>
-            <li><Link href="/dashboard/external-feeds">External Feeds</Link></li>
             <li><AdminNavLink /></li>
             <li><a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">GitHub</a></li>
           </ul>
