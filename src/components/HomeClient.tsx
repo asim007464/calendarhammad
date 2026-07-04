@@ -196,8 +196,10 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
               Your Worldwide Hub For <span className="gradient-text">Ham Radio On-Air Activities</span>
             </h1>
             <p className="hero-lead">
-              Browse the amateur radio event calendar — contests, special event stations, POTA and SOTA
-              activations, DXpeditions, nets, and field days. Publish your ham radio activity on QSO Dates.
+              Browse the amateur radio event calendar — contests, special event stations,{" "}
+              <span className="hero-acronym no-cap">POTA</span> and{" "}
+              <span className="hero-acronym no-cap">SOTA</span> activations, DXpeditions, nets, and field days.
+              Publish your ham radio activity on <span className="hero-acronym no-cap">QSO</span> Dates.
             </p>
             <div className="hero-cta">
               <button type="button" className="btn btn-primary btn-lg" onClick={openAddActivity}>
