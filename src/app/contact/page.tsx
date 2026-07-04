@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
-import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/siteContact";
+import { WhatsAppIcon } from "@/components/WhatsAppIcon";
+import { WHATSAPP_URL } from "@/lib/siteContact";
 import { LEGAL_NAV } from "@/lib/legalNav";
 import { buildPageMetadata } from "@/lib/seo";
 
@@ -14,11 +15,11 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 const CONTACT_TOPICS = [
-  "General support",
-  "Privacy requests",
-  "Copyright complaints",
-  "Legal notices",
-  "API questions",
+  "General Support",
+  "Privacy Requests",
+  "Copyright Complaints",
+  "Legal Notices",
+  "API Questions",
 ];
 
 export default function ContactPage() {
@@ -49,8 +50,15 @@ export default function ContactPage() {
           <p>The fastest way to reach the QSODates.com team is via WhatsApp. We respond as soon as we can.</p>
 
           <div className="contact-whatsapp-card">
-            <p className="contact-label">WhatsApp</p>
-            <p className="contact-number no-cap">{WHATSAPP_DISPLAY}</p>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-wa-logo"
+              aria-label="Chat on WhatsApp"
+            >
+              <WhatsAppIcon size={48} />
+            </a>
             <a
               href={WHATSAPP_URL}
               target="_blank"

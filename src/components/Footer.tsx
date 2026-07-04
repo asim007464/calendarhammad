@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { AdminNavLink } from "@/components/AdminNavLink";
+import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { SOCIAL_LINKS } from "@/types/database";
 
 export function Footer() {
@@ -28,8 +29,14 @@ export function Footer() {
             <a href={SOCIAL_LINKS.x} target="_blank" rel="noopener noreferrer" className="social-btn">
               X
             </a>
-            <a href={SOCIAL_LINKS.whatsapp} target="_blank" rel="noopener noreferrer" className="social-btn">
-              WhatsApp {SOCIAL_LINKS.whatsappDisplay}
+            <a
+              href={SOCIAL_LINKS.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-btn social-btn-icon"
+              aria-label="Chat on WhatsApp"
+            >
+              <WhatsAppIcon size={18} />
             </a>
           </div>
         </div>
@@ -65,7 +72,18 @@ export function Footer() {
           <h4>Contact</h4>
           <ul>
             <li><Link href="/contact">Contact Us</Link></li>
-            <li><a href={SOCIAL_LINKS.whatsapp} target="_blank" rel="noopener noreferrer">{SOCIAL_LINKS.whatsappDisplay}</a></li>
+            <li>
+              <a
+                href={SOCIAL_LINKS.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-wa-link"
+                aria-label="Chat on WhatsApp"
+              >
+                <WhatsAppIcon size={18} />
+                <span>WhatsApp</span>
+              </a>
+            </li>
             <li><a href={SOCIAL_LINKS.site}>www.qsodates.com</a></li>
           </ul>
         </div>
