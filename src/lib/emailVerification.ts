@@ -72,13 +72,16 @@ export async function issueEmailVerificationOtp(
     throw new Error("Could not create verification code.");
   }
 
-  void sendRegistrationOtpEmail({
-    to: email,
-    displayName: displayName || "there",
-    code,
-  }).catch((err) => {
+  try {
+    await sendRegistrationOtpEmail({
+      to: email,
+      displayName: displayName || "there",
+      code,
+    });
+  } catch (err) {
     console.error("Registration OTP email error:", err);
-  });
+    throw err;
+  }
 
   return { ok: true as const };
 }

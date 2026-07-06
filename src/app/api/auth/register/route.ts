@@ -114,9 +114,12 @@ export async function POST(request: Request) {
     const message =
       raw.toLowerCase().includes("535") ||
       raw.toLowerCase().includes("badcredentials") ||
-      raw.toLowerCase().includes("smtp")
+      raw.toLowerCase().includes("smtp") ||
+      raw.toLowerCase().includes("smtp_email")
         ? toMailUserError(err)
-        : raw;
+        : raw.includes("email_verification_otps") || raw.includes("not configured")
+          ? "Email verification is not set up on the server. Run migration 006 in Supabase."
+          : raw;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

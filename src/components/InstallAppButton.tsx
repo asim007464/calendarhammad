@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { Download, Share, Smartphone, X } from "lucide-react";
+import { Download, Smartphone, X } from "lucide-react";
+import { InstallHelpModal } from "@/components/InstallHelpModal";
 import {
   type BeforeInstallPromptEvent,
-  isIosDevice,
   isMobileDevice,
   isStandaloneApp,
 } from "@/lib/pwa";
@@ -13,40 +12,6 @@ import {
 interface InstallAppButtonProps {
   className?: string;
   variant?: "button" | "card";
-}
-
-function InstallHelpModal({ onClose, ios }: { onClose: () => void; ios: boolean }) {
-  return createPortal(
-    <div className="install-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="panel install-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="install-modal-head">
-          <h2>{ios ? "Add to Home Screen" : "Install QSO Dates"}</h2>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close">
-            <X size={16} />
-          </button>
-        </div>
-        {ios ? (
-          <ol className="ios-steps">
-            <li>Open this page in <strong>Safari</strong>.</li>
-            <li>Tap <Share size={14} className="inline-icon" /> <strong>Share</strong>.</li>
-            <li>Tap <strong>Add to Home Screen</strong>.</li>
-            <li>Tap <strong>Add</strong>. QSO Dates appears on your home screen.</li>
-          </ol>
-        ) : (
-          <ol className="ios-steps">
-            <li>Open <strong>qsodates.com</strong> in <strong>Chrome</strong> on your phone.</li>
-            <li>Tap the browser menu (⋮) in the top right.</li>
-            <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
-            <li>Confirm. QSO Dates will appear on your home screen.</li>
-          </ol>
-        )}
-        <button type="button" className="btn btn-primary" style={{ marginTop: 16, width: "100%" }} onClick={onClose}>
-          Got it
-        </button>
-      </div>
-    </div>,
-    document.body
-  );
 }
 
 export default function InstallAppButton({ className = "", variant = "button" }: InstallAppButtonProps) {
@@ -82,27 +47,39 @@ export default function InstallAppButton({ className = "", variant = "button" }:
   const canNativeInstall = Boolean(deferredPrompt);
   const showButton = variant === "card" || isMobileDevice() || canNativeInstall;
 
-  const handleInstall = useCallback(async () => {
+  const runNativeInstall = useCallback(async () => {
+    if (!deferredPrompt) return;
+    setInstalling(true);
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+        setHelpOpen(false);
+      }
+    } catch {
+      /* keep modal open with manual steps */
+    } finally {
+      setInstalling(false);
+    }
+  }, [deferredPrompt]);
+
+  const handleInstall = useCallback(() => {
     if (installed) return;
 
+    // Mobile: always show instructions first (iOS has no native prompt; Android should not skip the guide).
+    if (isMobileDevice()) {
+      setHelpOpen(true);
+      return;
+    }
+
     if (canNativeInstall && deferredPrompt) {
-      setInstalling(true);
-      try {
-        await deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === "accepted") {
-          setDeferredPrompt(null);
-        }
-      } catch {
-        setHelpOpen(true);
-      } finally {
-        setInstalling(false);
-      }
+      void runNativeInstall();
       return;
     }
 
     setHelpOpen(true);
-  }, [installed, canNativeInstall, deferredPrompt]);
+  }, [installed, canNativeInstall, deferredPrompt, runNativeInstall]);
 
   if (installed) {
     if (variant === "card") {
@@ -127,15 +104,20 @@ export default function InstallAppButton({ className = "", variant = "button" }:
     <>
       <button
         type="button"
-        onClick={() => void handleInstall()}
+        onClick={handleInstall}
         disabled={installing}
         className={`${btnClass} ${className}`.trim()}
       >
         <Download size={15} aria-hidden />
-        {installing ? "Installing…" : "Install App"}
+        {installing ? "Installing…" : variant === "card" ? "How to install on your phone" : "Install App"}
       </button>
       {mounted && helpOpen && (
-        <InstallHelpModal onClose={() => setHelpOpen(false)} ios={isIosDevice()} />
+        <InstallHelpModal
+          onClose={() => setHelpOpen(false)}
+          canNativeInstall={canNativeInstall}
+          onNativeInstall={() => void runNativeInstall()}
+          installing={installing}
+        />
       )}
     </>
   );

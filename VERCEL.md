@@ -42,8 +42,12 @@ Vercel → **Settings → Environment Variables** → add for Production, Previe
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xphancbkmcbswyhoatzh.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | your anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | your service role key |
-| `NEXT_PUBLIC_SITE_URL` | `https://your-app.vercel.app` |
-| `ADMIN_PASSWORD` | your admin password |
+| `NEXT_PUBLIC_SITE_URL` | `https://www.qsodates.com` |
+| `SMTP_EMAIL` | Gmail address used to send OTP emails |
+| `SMTP_APP_PASSWORD` | Gmail [App Password](https://myaccount.google.com/apppasswords) (16 chars, no spaces needed) |
+| `ADMIN_EMAIL` | Super-admin email for admin panel |
+| `DEVELOPER_UNLOCK_SECRET` | Emergency site unlock secret |
+| `OPENAI_API_KEY` | Optional — AI chat assistant |
 
 Copy from local `.env.local`, then **Redeploy**.
 
