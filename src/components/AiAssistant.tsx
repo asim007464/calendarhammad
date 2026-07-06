@@ -12,7 +12,7 @@ export function AiAssistant() {
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       role: "assistant",
-      content: "Hi! Ask me anything about QSO Dates, ham radio events, or the API.",
+      content: "Hi! Ask about QSO Dates, ham radio events, or the public API. I only share general help — not passwords, keys, or private user data.",
     },
   ]);
 
@@ -50,7 +50,7 @@ export function AiAssistant() {
         <div className="ai-panel panel" role="dialog" aria-label="QSO Dates AI assistant">
           <div className="ai-panel-head">
             <strong>QSO Dates Assistant</strong>
-            <span className="section-sub">Website and API help</span>
+            <span className="section-sub">Public website help only</span>
           </div>
           <div className="ai-messages">
             {messages.map((m, i) => (
