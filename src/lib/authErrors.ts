@@ -10,7 +10,7 @@ export function formatAuthError(message: string): {
     lower.includes("email confirmation")
   ) {
     return {
-      error: "Please verify your email before signing in. Check your inbox or resend the link below.",
+      error: "Please verify your email with the 6-digit code we sent you. Enter it below or resend a new code.",
       needsVerification: true,
     };
   }

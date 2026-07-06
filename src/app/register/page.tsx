@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, ArrowRight } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import { PasswordInput, passwordFieldAttrs } from "@/components/PasswordInput";
 import { checkPassword } from "@/lib/passwordUtils";
 import { getSafeRedirectPath } from "@/lib/authRedirect";
+
+type Step = "form" | "otp" | "done";
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
@@ -17,7 +19,9 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState<Step>("form");
+  const [otp, setOtp] = useState("");
+  const [sentNotice, setSentNotice] = useState("");
   const [redirectTo, setRedirectTo] = useState("/");
 
   const pwStrength = checkPassword(password);
@@ -27,7 +31,7 @@ export default function RegisterPage() {
     setRedirectTo(getSafeRedirectPath(params.get("next")));
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
@@ -43,11 +47,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName: displayName.trim(), email: email.trim(), password }),
+        body: JSON.stringify({ displayName: displayName.trim(), email: email.trim().toLowerCase(), password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Registration failed.");
-      setSuccess(true);
+
+      setSentNotice(data.message ?? "A 6-digit code was sent to your email.");
+      setStep("otp");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Registration failed.";
       if (msg.toLowerCase().includes("already exists")) {
@@ -60,24 +66,119 @@ export default function RegisterPage() {
     }
   }
 
-  if (success) {
+  async function resendCode() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not resend code.");
+      setSentNotice(data.message ?? "A new code was sent.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not resend code.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyOtp() {
+    if (!/^\d{6}$/.test(otp)) {
+      setError("Enter the 6-digit code from your email.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/verify-registration-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Invalid code.");
+      setStep("done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid code.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (step === "done") {
     return (
       <div className="auth-page">
         <div className="auth-card panel">
           <div className="auth-done">
             <CheckCircle2 size={40} className="auth-done-icon" />
-            <h1>Account Created</h1>
+            <h1>Email Verified</h1>
             <p className="section-sub">
               Your account is ready. Sign in with <strong className="no-cap">{email}</strong> and your password.
-              {redirectTo !== "/" && " You will return to where you left off."}
             </p>
             <Link
-              href={redirectTo === "/" ? "/login" : `/login?next=${encodeURIComponent(redirectTo)}`}
+              href={redirectTo === "/" ? "/login?verified=1" : `/login?verified=1&next=${encodeURIComponent(redirectTo)}`}
               className="btn btn-primary auth-submit"
             >
               Go to sign in
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "otp") {
+    return (
+      <div className="auth-page">
+        <div className="auth-card panel">
+          <div className="auth-header">
+            <BrandMark link={false} size="auth" />
+            <h1>Verify Your Email</h1>
+            <p className="section-sub">
+              Enter the 6-digit code sent to <strong className="no-cap">{email}</strong>
+            </p>
+          </div>
+
+          {error && <p role="alert" className="auth-notice auth-notice--error">{error}</p>}
+          {sentNotice && <p className="auth-notice auth-notice--success">{sentNotice}</p>}
+
+          <div className="auth-form">
+            <label className="field">
+              <span>6-digit code</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                autoComplete="one-time-code"
+                className="auth-otp no-cap"
+              />
+            </label>
+            <button type="button" className="btn btn-primary auth-submit" onClick={verifyOtp} disabled={loading}>
+              {loading ? <Loader2 size={15} className="spin" /> : null}
+              {loading ? "Verifying…" : "Verify email"} {!loading && <ArrowRight size={14} />}
+            </button>
+            {loading && (
+              <p className="auth-hint">Checking your code…</p>
+            )}
+            <button type="button" className="auth-link-btn" onClick={resendCode} disabled={loading}>
+              {loading ? "Sending…" : "Resend code"}
+            </button>
+          </div>
+
+          <p className="auth-footer-link">
+            Wrong email?{" "}
+            <button type="button" className="auth-link-btn" onClick={() => { setStep("form"); setOtp(""); setError(""); }}>
+              Go back
+            </button>
+          </p>
         </div>
       </div>
     );
@@ -94,7 +195,7 @@ export default function RegisterPage() {
 
         {error && <p role="alert" className="auth-notice auth-notice--error">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleRegister} className="auth-form">
           <label className="field">
             <span>Display name</span>
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
@@ -144,7 +245,7 @@ export default function RegisterPage() {
             {loading ? "Creating account…" : "Create account"}
           </button>
           {loading && (
-            <p className="auth-hint">Setting up your account. This may take a few seconds.</p>
+            <p className="auth-hint">Creating your account…</p>
           )}
         </form>
 

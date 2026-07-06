@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import type { Activity, ActivityType } from "@/types/database";
 import { BANDS, MODES } from "@/types/database";
+import { UtcDateTimePicker } from "@/components/UtcDateTimePicker";
+import { defaultUtcPickerValue, isoToUtcPickerValue } from "@/lib/utcDateTime";
 
 interface Props {
   activityTypes: ActivityType[];
@@ -113,6 +115,10 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
   const [logoUrl, setLogoUrl] = useState(editing?.logo_url || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [startUtc, setStartUtc] = useState(
+    () => isoToUtcPickerValue(editing?.start_at) || defaultUtcPickerValue()
+  );
+  const [endUtc, setEndUtc] = useState(() => isoToUtcPickerValue(editing?.end_at));
 
   const toggle = (list: string[], set: (v: string[]) => void, val: string) => {
     set(list.includes(val) ? list.filter((x) => x !== val) : [...list, val]);
@@ -129,6 +135,11 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
     e.preventDefault();
     setLoading(true);
     setError("");
+    if (!startUtc) {
+      setError("Please select a start date and time (UTC).");
+      setLoading(false);
+      return;
+    }
     const fd = new FormData(e.currentTarget);
     const cf: Record<string, string> = {};
     customFields.forEach(({ key, value }) => { if (key.trim()) cf[key.trim()] = value; });
@@ -139,8 +150,8 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
       description: fd.get("description"),
       callsign: fd.get("callsign"),
       organizer: fd.get("organizer"),
-      start_at: fd.get("start"),
-      end_at: fd.get("end") || null,
+      start_at: startUtc,
+      end_at: endUtc || null,
       recurrence: fd.get("recurrence"),
       bands,
       modes,
@@ -193,9 +204,6 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
     }
   };
 
-  const defaultStart = editing?.start_at?.slice(0, 16) || "";
-  const defaultEnd = editing?.end_at?.slice(0, 16) || "";
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 760 }}>
@@ -247,14 +255,19 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
               </label>
             </div>
             <div className="grid2">
-              <label className="field">
-                <span>Start (UTC) *</span>
-                <input type="datetime-local" name="start" required className="no-cap" defaultValue={defaultStart} />
-              </label>
-              <label className="field">
-                <span>End (UTC)</span>
-                <input type="datetime-local" name="end" className="no-cap" defaultValue={defaultEnd} />
-              </label>
+              <UtcDateTimePicker
+                label="Start (UTC) *"
+                name="start"
+                value={startUtc}
+                onChange={setStartUtc}
+                required
+              />
+              <UtcDateTimePicker
+                label="End (UTC)"
+                name="end"
+                value={endUtc}
+                onChange={setEndUtc}
+              />
             </div>
             <label className="field">
               <span>Recurrence</span>

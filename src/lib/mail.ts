@@ -92,6 +92,46 @@ export async function sendVerificationEmail({
   });
 }
 
+export async function sendRegistrationOtpEmail({
+  to,
+  displayName,
+  code,
+}: {
+  to: string;
+  displayName: string;
+  code: string;
+}) {
+  const from = process.env.SMTP_EMAIL!.trim();
+  const transporter = getAuthTransporter();
+
+  await transporter.sendMail({
+    from: `"QSO Dates" <${from}>`,
+    to,
+    subject: "Verify your QSO Dates account",
+    text: [
+      `Hi ${displayName},`,
+      "",
+      "Thanks for registering on QSO Dates.",
+      "",
+      `Your verification code is: ${code}`,
+      "",
+      "Enter this 6-digit code on the website to complete your registration.",
+      "This code expires in 10 minutes.",
+      "",
+      "If you did not create this account, you can ignore this email.",
+    ].join("\n"),
+    html: emailShell(
+      "QSO Dates",
+      `
+        <p style="margin:0 0 12px">Hi <strong>${displayName}</strong>,</p>
+        <p style="margin:0 0 8px;color:rgba(198,255,52,0.75)">Enter this code to verify your email:</p>
+        <p style="margin:0 0 20px;font-size:32px;font-weight:700;letter-spacing:0.3em;font-family:monospace;color:#c6ff34">${code}</p>
+        <p style="margin:0;font-size:13px;color:rgba(198,255,52,0.45)">This code expires in 10 minutes.</p>
+      `
+    ),
+  });
+}
+
 export async function sendPasswordResetOtpEmail({ to, code }: { to: string; code: string }) {
   const from = process.env.SMTP_EMAIL!.trim();
   const transporter = getAuthTransporter();

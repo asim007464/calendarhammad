@@ -2,8 +2,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveUserRole } from "@/lib/admin";
 import { generateApiKey } from "@/lib/apiKey";
 import { checkPassword } from "@/lib/passwordUtils";
-import { sendAdminRegistrationNotificationEmail, sendVerificationEmail, toMailUserError } from "@/lib/mail";
-import { getAuthCallbackUrl, buildEmailVerificationUrl } from "@/lib/siteUrl";
+import { issueEmailVerificationOtp } from "@/lib/emailVerification";
+import { sendAdminRegistrationNotificationEmail, toMailUserError } from "@/lib/mail";
+import { getAuthCallbackUrl } from "@/lib/siteUrl";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { NextResponse } from "next/server";
 
@@ -59,21 +60,17 @@ export async function POST(request: Request) {
     }
 
     const userId = linkData.user?.id;
-    const hashedToken = linkData.properties?.hashed_token;
-
-    if (!userId || !hashedToken) {
-      throw new Error("Failed to generate verification link.");
+    if (!userId) {
+      throw new Error("Failed to create account.");
     }
 
-    // Allow sign-in immediately; verification email is optional welcome mail.
-    const { error: confirmError } = await supabase.auth.admin.updateUserById(userId, {
-      email_confirm: true,
+    // Email stays unverified until user submits the 6-digit OTP.
+    const { error: unconfirmError } = await supabase.auth.admin.updateUserById(userId, {
+      email_confirm: false,
     });
-    if (confirmError) {
-      console.error("Email confirm error:", confirmError);
+    if (unconfirmError) {
+      console.error("Unconfirm email error:", unconfirmError);
     }
-
-    const verifyUrl = buildEmailVerificationUrl(hashedToken);
 
     const callsign = placeholderCallsign(userId);
     const apiKey = generateApiKey();
@@ -92,9 +89,7 @@ export async function POST(request: Request) {
       throw new Error("Account was created but profile setup failed. Please contact support.");
     }
 
-    void sendVerificationEmail({ to: email, displayName, verifyUrl }).catch((emailErr) => {
-      console.error("Verification email error:", emailErr);
-    });
+    await issueEmailVerificationOtp(supabase, email, displayName);
 
     const notifyEmail = process.env.NOTIFY_EMAIL ?? process.env.SMTP_EMAIL;
     if (notifyEmail) {
@@ -109,7 +104,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      message: "Account created. You can sign in now.",
+      requiresVerification: true,
+      email,
+      message: "Account created. Enter the 6-digit code sent to your email to complete registration.",
     });
   } catch (err) {
     console.error("Register API error:", err);

@@ -43,6 +43,8 @@ export default function LoginPage() {
   const [pendingEmail, setPendingEmail] = useState("");
 
   const [resending, setResending] = useState(false);
+  const [verificationOtp, setVerificationOtp] = useState("");
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
 
 
@@ -88,15 +90,65 @@ export default function LoginPage() {
 
       if (!res.ok) throw new Error(data.error ?? "Could not send email.");
 
-      showToast("Verification email sent. Check your inbox.");
+      showToast("Verification code sent. Check your inbox.");
 
     } catch (err) {
 
-      setError(err instanceof Error ? err.message : "Could not send verification email.");
+      setError(err instanceof Error ? err.message : "Could not send verification code.");
 
     } finally {
 
       setResending(false);
+
+    }
+
+  }
+
+
+
+  async function handleVerifyOtp() {
+
+    if (!pendingEmail || !/^\d{6}$/.test(verificationOtp)) {
+
+      setError("Enter the 6-digit code from your email.");
+
+      return;
+
+    }
+
+    setVerifyingOtp(true);
+
+    setError("");
+
+    try {
+
+      const res = await fetch("/api/auth/verify-registration-otp", {
+
+        method: "POST",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify({ email: pendingEmail, otp: verificationOtp }),
+
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error ?? "Invalid code.");
+
+      setNeedsVerification(false);
+
+      setVerificationOtp("");
+
+      showToast("Email verified! You can sign in now.");
+
+    } catch (err) {
+
+      setError(err instanceof Error ? err.message : "Invalid code.");
+
+    } finally {
+
+      setVerifyingOtp(false);
 
     }
 
@@ -130,45 +182,15 @@ export default function LoginPage() {
 
       let { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-
-
       if (authError) {
 
         const formatted = formatAuthError(authError.message);
 
-        if (formatted.needsVerification) {
+        setError(formatted.error);
 
-          const confirmRes = await fetch("/api/auth/confirm-email", {
+        setNeedsVerification(Boolean(formatted.needsVerification));
 
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify({ email }),
-
-          });
-
-          if (confirmRes.ok) {
-
-            const retry = await supabase.auth.signInWithPassword({ email, password });
-
-            authError = retry.error;
-
-          }
-
-        }
-
-        if (authError) {
-
-          const retryFormatted = formatAuthError(authError.message);
-
-          setError(retryFormatted.error);
-
-          setNeedsVerification(Boolean(retryFormatted.needsVerification));
-
-          return;
-
-        }
+        return;
 
       }
 
@@ -270,21 +292,73 @@ export default function LoginPage() {
 
           {needsVerification && (
 
-            <button
+            <div className="auth-form" style={{ marginBottom: 16 }}>
 
-              type="button"
+              <p className="auth-notice auth-notice--success" style={{ marginBottom: 12 }}>
 
-              className="btn btn-outline btn-sm auth-submit"
+                Your email is not verified yet. Enter the 6-digit code sent to your inbox.
 
-              onClick={handleResendVerification}
+              </p>
 
-              disabled={resending}
+              <label className="field">
 
-            >
+                <span>6-digit verification code</span>
 
-              {resending ? "Sending…" : "Resend verification email"}
+                <input
 
-            </button>
+                  type="text"
+
+                  inputMode="numeric"
+
+                  maxLength={6}
+
+                  value={verificationOtp}
+
+                  onChange={(e) => setVerificationOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+
+                  placeholder="000000"
+
+                  autoComplete="one-time-code"
+
+                  className="auth-otp no-cap"
+
+                />
+
+              </label>
+
+              <button
+
+                type="button"
+
+                className="btn btn-primary auth-submit"
+
+                onClick={handleVerifyOtp}
+
+                disabled={verifyingOtp}
+
+              >
+
+                {verifyingOtp ? "Verifying…" : "Verify email"}
+
+              </button>
+
+              <button
+
+                type="button"
+
+                className="auth-link-btn"
+
+                onClick={handleResendVerification}
+
+                disabled={resending}
+
+              >
+
+                {resending ? "Sending…" : "Resend code"}
+
+              </button>
+
+            </div>
 
           )}
 

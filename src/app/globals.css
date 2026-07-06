@@ -1098,7 +1098,7 @@ a { color: var(--brand-light); }
 }
 .modal-eyebrow { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 6px; }
 .modal-head h2 { margin: 0; font-size: 22px; }
-.modal-body { padding: 24px; }
+.modal-body { padding: 24px; overflow: visible; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .field span { font-size: 12px; font-weight: 700; color: var(--text-muted); }
 .field input, .field textarea, .field select {
@@ -1655,6 +1655,117 @@ a { color: var(--brand-light); }
 .ai-msg--assistant { background: rgba(198, 255, 52, 0.1); align-self: flex-start; max-width: 95%; }
 .ai-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
 .ai-input-row input { flex: 1; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; color: var(--text); font: inherit; }
+
+/* UTC date/time picker (activity form) */
+.dt-picker-field { position: relative; margin-bottom: 0; }
+.dt-picker-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition);
+}
+.dt-picker-trigger:hover,
+.dt-picker-trigger[aria-expanded="true"] {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px rgba(198, 255, 52, 0.15);
+}
+.dt-picker-trigger svg { color: var(--brand); flex-shrink: 0; }
+.dt-picker-placeholder { color: var(--text-muted); }
+.dt-picker-pop {
+  position: absolute;
+  z-index: 60;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg);
+}
+.dt-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dt-picker-head strong { font-size: 14px; color: var(--text); }
+.dt-picker-weekdays span { padding: 6px 2px; font-size: 10px; }
+.dt-picker-days { gap: 4px; }
+.dt-picker-day {
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.dt-picker-day:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.dt-picker-day.other {
+  opacity: 0.3;
+  cursor: default;
+}
+.dt-picker-day.today {
+  border-color: rgba(198, 255, 52, 0.45);
+  color: var(--brand-light);
+}
+.dt-picker-day.selected {
+  background: var(--brand);
+  color: var(--btn-primary-text);
+  border-color: var(--brand);
+  box-shadow: 0 0 16px rgba(198, 255, 52, 0.35);
+}
+.dt-picker-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.dt-picker-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dt-picker-time-inputs input {
+  width: 52px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: center;
+}
+.dt-picker-time-inputs input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+.dt-picker-done { width: 100%; margin-top: 12px; }
 
 /* Docs / API pages */
 /* API documentation */
