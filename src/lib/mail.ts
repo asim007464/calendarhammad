@@ -12,6 +12,26 @@ function getAuthTransporter() {
   return nodemailer.createTransport({ service: "gmail", auth: { user, pass } });
 }
 
+// Don't show raw SMTP errors to users.
+export function toMailUserError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  const lower = message.toLowerCase();
+
+  if (lower.includes("smtp_email") && lower.includes("must be set")) {
+    return "Email is not configured on the server. Please try again later or contact support.";
+  }
+  if (
+    lower.includes("535") ||
+    lower.includes("badcredentials") ||
+    lower.includes("username and password not accepted") ||
+    lower.includes("invalid login")
+  ) {
+    return "We could not send the verification email right now. Please try again later or contact support.";
+  }
+
+  return "We could not send the verification email. Please try again later.";
+}
+
 function emailShell(title: string, bodyHtml: string) {
   return `
     <div style="font-family:DM Sans,system-ui,sans-serif;max-width:520px;margin:0 auto;color:#f0ffd6">
@@ -101,6 +121,54 @@ export async function sendPasswordResetOtpEmail({ to, code }: { to: string; code
   });
 }
 
+export async function sendAdminSupportNotificationEmail({
+  to,
+  userName,
+  email,
+  subject,
+  message,
+}: {
+  to: string;
+  userName: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  const from = process.env.SMTP_EMAIL!.trim();
+  const transporter = getAuthTransporter();
+  const adminHref = `${getSiteUrl()}/admin/support`;
+
+  await transporter.sendMail({
+    from: `"QSO Dates" <${from}>`,
+    to,
+    subject: `Support: ${subject}`,
+    text: [
+      "New support message on QSO Dates.",
+      "",
+      `From: ${userName}`,
+      email ? `Email: ${email}` : "",
+      `Subject: ${subject}`,
+      "",
+      message,
+      "",
+      `Open inbox: ${adminHref}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    html: emailShell(
+      "QSO Dates: Support",
+      `
+        <p style="margin:0 0 8px"><strong>${userName}</strong>${email ? `, ${email}` : ""}</p>
+        <p style="margin:0 0 12px;color:rgba(198,255,52,0.75)">${subject}</p>
+        <p style="margin:0 0 20px;white-space:pre-wrap;line-height:1.6">${message}</p>
+        <a href="${adminHref}" style="display:inline-block;background:#c6ff34;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
+          Open support inbox
+        </a>
+      `,
+    ),
+  });
+}
+
 export async function sendAdminRegistrationNotificationEmail({
   to,
   displayName,
@@ -127,7 +195,7 @@ export async function sendAdminRegistrationNotificationEmail({
       `Review in admin: ${adminHref}`,
     ].join("\n"),
     html: emailShell(
-      "QSO Dates — New user",
+      "QSO Dates: New user",
       `
         <p style="margin:0 0 12px"><strong>${displayName}</strong></p>
         <p style="margin:0 0 16px;color:rgba(198,255,52,0.75)">Email: ${email}</p>

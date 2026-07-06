@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendPasswordResetOtpEmail } from "@/lib/mail";
+import { sendPasswordResetOtpEmail, toMailUserError } from "@/lib/mail";
 import { generateOtpCode, hashOtp } from "@/lib/otp";
 import { EMAIL_RE, OTP_TTL_MS, findAccountByEmail } from "@/lib/passwordReset";
 import { enforceRateLimit } from "@/lib/rateLimit";
@@ -37,7 +37,9 @@ export async function POST(request: Request) {
         throw new Error("Could not create reset code.");
       }
 
-      await sendPasswordResetOtpEmail({ to: email, code });
+      void sendPasswordResetOtpEmail({ to: email, code }).catch((emailErr) => {
+        console.error("Reset OTP email error:", emailErr);
+      });
     }
 
     return NextResponse.json({
@@ -46,7 +48,14 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Forgot password error:", err);
-    const message = err instanceof Error ? err.message : "Could not send reset code.";
+    const raw = err instanceof Error ? err.message : "Could not send reset code.";
+    const lower = raw.toLowerCase();
+    const message =
+      lower.includes("password_reset_otps") || lower.includes("not configured")
+        ? raw
+        : lower.includes("smtp") || lower.includes("535")
+          ? toMailUserError(err)
+          : raw;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

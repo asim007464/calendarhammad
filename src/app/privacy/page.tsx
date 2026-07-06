@@ -6,7 +6,7 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Privacy Policy | QSO Dates",
-  description: "Privacy Policy for QSODates.com — how we collect, use, and protect your personal information.",
+  description: "Privacy Policy for QSODates.com. How we collect, use, and protect your personal information.",
   path: "/privacy",
 });
 

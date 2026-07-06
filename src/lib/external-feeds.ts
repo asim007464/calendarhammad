@@ -1,7 +1,7 @@
 import type { ExternalFeedItem } from "@/types/database";
 
 export async function fetchEhamHubFeed(username: string, apiKey?: string): Promise<ExternalFeedItem[]> {
-  // eHamHub API placeholder — replace with real endpoint when available
+  // eHamHub API placeholder, swap in real endpoint later
   if (!apiKey) {
     return [
       {

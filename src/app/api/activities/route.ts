@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
 import { normalizeActivityBody } from "@/lib/activity-api";
+import { isAdminEmail } from "@/lib/admin";
 import type { Activity } from "@/types/database";
-
 const DEMO_ACTIVITIES: Activity[] = [
   {
     id: "demo-1",
     type_name: "Contest",
     name: "CQ WW DX Contest",
-    description: "Worldwide DX contest — SSB and CW weekends.",
+    description: "Worldwide DX contest, SSB and CW weekends.",
     callsign: "Various",
     start_at: new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 15, 12, 0)).toISOString(),
     end_at: new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 16, 12, 0)).toISOString(),
@@ -63,12 +63,25 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("role, email")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const isAdmin =
+      isAdminEmail(user.email) ||
+      isAdminEmail(profile?.email) ||
+      profile?.role === "admin";
+
+    const status = isAdmin ? "published" : "pending_review";
+
     const { data, error } = await admin
       .from("activities")
       .insert({
         ...body,
         user_id: user.id,
-        status: "published",
+        status,
       })
       .select()
       .single();
@@ -79,18 +92,28 @@ export async function POST(request: Request) {
       activity_id: data.id,
       user_id: user?.id || null,
       event_type: "social_post",
-      metadata: { action: "created" },
+      metadata: { action: "created", status },
     });
 
-    // Fire-and-forget social post — don't block save
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/social/post`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ activity_id: data.id }),
-    }).catch(() => {});
+    if (status === "published") {
+      fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/social/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activity_id: data.id }),
+      }).catch(() => {});
+    }
 
-    return NextResponse.json(data, { status: 201 });
-  } catch (e) {
+    return NextResponse.json(
+      {
+        ...data,
+        pendingApproval: status === "pending_review",
+        message:
+          status === "pending_review"
+            ? "Activity submitted for admin approval. It will appear on the site once approved."
+            : "Activity published.",
+      },
+      { status: 201 }
+    );  } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
 }

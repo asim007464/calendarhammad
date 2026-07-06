@@ -31,6 +31,10 @@ async function getBearerUser(request: Request) {
   return user;
 }
 
+function buildSession(user: User, profile: AdminProfile, isSuperAdmin: boolean): AdminSession {
+  return { user, profile, isSuperAdmin };
+}
+
 export async function verifyAdminSession(request: Request): Promise<AdminSession | null> {
   const user = await getBearerUser(request);
   if (!user) return null;
@@ -43,26 +47,34 @@ export async function verifyAdminSession(request: Request): Promise<AdminSession
     .maybeSingle();
 
   const isSuperAdmin = isAdminEmail(user.email) || isAdminEmail(profile?.email);
-  if (!isSuperAdmin) return null;
+  const isAdminRole = profile?.role === "admin";
 
+  if (!isSuperAdmin && !isAdminRole) return null;
   if (profile?.is_blocked) return null;
 
   if (!profile) {
-    return {
+    return buildSession(
       user,
-      profile: { id: user.id, role: "admin", email: user.email!, name: "" },
-      isSuperAdmin: true,
-    };
+      { id: user.id, role: "admin", email: user.email!, name: "" },
+      isSuperAdmin
+    );
   }
 
-  return {
+  return buildSession(
     user,
-    profile: {
+    {
       id: profile.id,
       role: profile.role,
       email: profile.email ?? user.email!,
       name: profile.name ?? "",
     },
-    isSuperAdmin,
-  };
+    isSuperAdmin
+  );
+}
+
+/** Only the developer / super-admin can unlock site lockdown or promote admins. */
+export async function verifySuperAdminSession(request: Request): Promise<AdminSession | null> {
+  const session = await verifyAdminSession(request);
+  if (!session?.isSuperAdmin) return null;
+  return session;
 }

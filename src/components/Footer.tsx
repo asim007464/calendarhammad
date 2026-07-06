@@ -6,11 +6,11 @@ import { FacebookIcon, GithubIcon, InstagramIcon, XIcon } from "@/components/Soc
 import { SOCIAL_LINKS } from "@/types/database";
 
 const SOCIAL_ITEMS = [
-  { href: SOCIAL_LINKS.github, label: "GitHub", icon: <GithubIcon size={16} /> },
-  { href: SOCIAL_LINKS.facebook, label: "Facebook", icon: <FacebookIcon size={16} /> },
-  { href: SOCIAL_LINKS.instagram, label: "Instagram", icon: <InstagramIcon size={16} /> },
-  { href: SOCIAL_LINKS.x, label: "X", icon: <XIcon size={16} /> },
-  { href: SOCIAL_LINKS.whatsapp, label: "WhatsApp", icon: <WhatsAppIcon size={16} />, iconOnly: true as const },
+  { href: SOCIAL_LINKS.github, label: "GitHub", Icon: GithubIcon },
+  { href: SOCIAL_LINKS.facebook, label: "Facebook", Icon: FacebookIcon },
+  { href: SOCIAL_LINKS.instagram, label: "Instagram", Icon: InstagramIcon },
+  { href: SOCIAL_LINKS.x, label: "X", Icon: XIcon },
+  { href: SOCIAL_LINKS.whatsapp, label: "WhatsApp", Icon: WhatsAppIcon },
 ];
 
 export function Footer() {
@@ -22,7 +22,7 @@ export function Footer() {
             <LogoWordmark size="footer" />
           </Link>
           <p className="footer-tagline">
-            Your Worldwide Hub For Amateur Radio Activities — Ham Radio Contests, Special Event Stations,{" "}
+            Your Worldwide Hub For Amateur Radio Activities. Ham radio contests, special event stations,{" "}
             <span className="no-cap">POTA</span>, <span className="no-cap">SOTA</span>, DXpeditions, Nets, And Field Days.
           </p>
           <div className="social-row">
@@ -32,12 +32,11 @@ export function Footer() {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`social-btn${"iconOnly" in item && item.iconOnly ? " social-btn-icon-only" : ""}`}
+                className="social-btn social-btn-icon-only"
                 aria-label={item.label}
                 title={item.label}
               >
-                {item.icon}
-                {!("iconOnly" in item && item.iconOnly) && <span>{item.label}</span>}
+                <item.Icon size={20} />
               </a>
             ))}
           </div>
@@ -62,9 +61,9 @@ export function Footer() {
           </ul>
         </div>
         <div className="footer-col">
-          <h4>Developers</h4>
+          <h4>API</h4>
           <ul>
-            <li><Link href="/docs">API Docs</Link></li>
+            <li><Link href="/docs">Documents</Link></li>
             <li><Link href="/api-docs">API Portal</Link></li>
             <li><Link href="/downloads">Downloads</Link></li>
           </ul>
@@ -73,23 +72,12 @@ export function Footer() {
           <h4>Contact</h4>
           <ul>
             <li><Link href="/contact">Contact Us</Link></li>
-            <li>
-              <a
-                href={SOCIAL_LINKS.whatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="footer-wa-logo"
-                aria-label="Chat on WhatsApp"
-              >
-                <WhatsAppIcon size={28} />
-              </a>
-            </li>
             <li><a href={SOCIAL_LINKS.site} className="no-cap">www.qsodates.com</a></li>
           </ul>
         </div>
       </div>
       <div className="footer-bottom">
-        © {new Date().getFullYear()} QSO Dates · Amateur Radio Activity Calendar · 73!
+        © {new Date().getFullYear()} QSO Dates. Amateur Radio Activity Calendar. 73!
       </div>
     </footer>
   );

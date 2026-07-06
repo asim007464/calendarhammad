@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "QSO Dates",
     short_name: "QSO",
     description:
-      "Ham radio activity calendar — amateur radio contests, POTA, SOTA, DXpeditions, field days, and special event stations worldwide.",
+      "Ham radio activity calendar for amateur radio contests, POTA, SOTA, DXpeditions, field days, and special event stations worldwide.",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -19,7 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: "/icon", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/apple-icon", sizes: "180x180", type: "image/png", purpose: "any" },
-      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icon-maskable", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

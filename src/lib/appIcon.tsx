@@ -10,14 +10,30 @@ let fontDataPromise: Promise<ArrayBuffer> | null = null;
 async function loadOrbitronBlack(): Promise<ArrayBuffer> {
   if (!fontDataPromise) {
     const fontPath = path.join(process.cwd(), "public/fonts/orbitron-black.ttf");
-    fontDataPromise = readFile(fontPath).then((buf) => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+    fontDataPromise = readFile(fontPath).then((buf) =>
+      buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+    );
   }
   return fontDataPromise;
 }
 
+// PWA icons need text in the center safe zone.
 export async function generateAppIcon(size: number) {
+  return renderAppIcon(size, { insetRatio: 0.2, fontRatio: 0.17 });
+}
+
+/** Android maskable icons crop ~20% from edges; use a smaller label in the center. */
+export async function generateMaskableAppIcon(size: number) {
+  return renderAppIcon(size, { insetRatio: 0.28, fontRatio: 0.14 });
+}
+
+async function renderAppIcon(
+  size: number,
+  { insetRatio, fontRatio }: { insetRatio: number; fontRatio: number },
+) {
   const fontData = await loadOrbitronBlack();
-  const pad = Math.round(size * 0.12);
+  const inset = Math.round(size * insetRatio);
+  const fontSize = Math.round(size * fontRatio);
 
   return new ImageResponse(
     (
@@ -29,16 +45,28 @@ export async function generateAppIcon(size: number) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: pad,
-          fontFamily: "Orbitron",
-          fontWeight: 900,
-          fontSize: Math.round(size * 0.24),
-          letterSpacing: Math.round(size * 0.03),
-          lineHeight: 1.15,
-          color: APP_ICON_COLOR,
+          paddingTop: inset,
+          paddingBottom: inset,
+          paddingLeft: Math.round(inset * 1.15),
+          paddingRight: Math.round(inset * 0.95),
         }}
       >
-        QSO
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "Orbitron",
+            fontWeight: 900,
+            fontSize,
+            letterSpacing: 0,
+            lineHeight: 1,
+            color: APP_ICON_COLOR,
+            whiteSpace: "nowrap",
+          }}
+        >
+          QSO
+        </div>
       </div>
     ),
     {

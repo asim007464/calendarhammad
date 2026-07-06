@@ -20,7 +20,7 @@ export default function AdminSocialPage() {
           {data.socialPosts.length === 0 && <p className="section-sub">No social posts yet.</p>}
           {data.socialPosts.map((p) => (
             <div key={p.id} className="admin-card">
-              <strong className="no-cap">{p.platform}</strong> — {p.status}
+              <strong className="no-cap">{p.platform}</strong>, {p.status}
               {p.error_message && <p style={{ color: "var(--text-muted)" }}>{p.error_message}</p>}
             </div>
           ))}

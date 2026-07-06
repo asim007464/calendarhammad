@@ -37,5 +37,5 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json({ activities, total: activities.length, license: "CC0 — free to use with attribution" });
+  return NextResponse.json({ activities, total: activities.length, license: "CC0, free to use with attribution" });
 }

@@ -89,7 +89,7 @@ export function statusOf(a: Activity, now = new Date()): "live" | "upcoming" | "
 
 export function fmtUTC(s?: string | null): string {
   const d = parseDate(s);
-  if (!d) return "—";
+  if (!d) return "N/A";
   return (
     d.toLocaleString("en-GB", {
       day: "2-digit",

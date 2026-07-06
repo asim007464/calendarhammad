@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, MessageSquare, Calendar, Megaphone, Share2,
-  Home, LogOut, Menu, X,
+  Home, LogOut, Menu, X, BarChart3, FileText,
 } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import { supabase } from "@/lib/supabase";
@@ -16,8 +16,10 @@ const adminLinks = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/support", label: "Support", icon: MessageSquare },
   { href: "/admin/activities", label: "Activities", icon: Calendar },
+  { href: "/admin/content", label: "Homepage", icon: FileText },
   { href: "/admin/broadcast", label: "Broadcast", icon: Megaphone },
   { href: "/admin/social", label: "Social", icon: Share2 },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 function isActive(pathname: string, href: string, exact?: boolean) {

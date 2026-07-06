@@ -6,7 +6,7 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Terms of Service | QSO Dates",
-  description: "Terms of Service for QSODates.com — amateur radio activity calendar and public APIs.",
+  description: "Terms of Service for QSODates.com, amateur radio activity calendar and public APIs.",
   path: "/terms",
 });
 

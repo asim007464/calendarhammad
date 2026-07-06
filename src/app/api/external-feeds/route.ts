@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdminEmail } from "@/lib/admin";
 import { fetchCQHamsFeed, fetchEhamHubFeed } from "@/lib/external-feeds";
 
-export async function GET() {
+async function requireAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ feeds: [], items: [] });
+  if (!user?.email || !isAdminEmail(user.email)) {
+    return null;
+  }
+  return user;
+}
+
+export async function GET() {
+  const user = await requireAdmin();
+  if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
 
   const admin = createAdminClient();
   const { data: feeds } = await admin.from("external_feeds").select("*").eq("user_id", user.id);
@@ -19,9 +28,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  const user = await requireAdmin();
+  if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
 
   const { platform, username, api_key, action } = await request.json();
   const admin = createAdminClient();
@@ -73,9 +81,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await requireAdmin();
+  if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
 
   const { platform } = await request.json();
   const admin = createAdminClient();

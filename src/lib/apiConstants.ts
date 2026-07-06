@@ -1,7 +1,7 @@
 import { getSiteUrl } from "@/lib/siteUrl";
 
 export const CANONICAL_SITE_URL = "https://www.qsodates.com";
-export const DAILY_API_LIMIT = Number(process.env.DAILY_API_LIMIT ?? 30);
+export const DAILY_API_LIMIT = Number(process.env.DAILY_API_LIMIT ?? 20);
 
 export interface ApiEndpointParameter {
   name: string;

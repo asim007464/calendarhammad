@@ -18,7 +18,7 @@ export const SEO_KEYWORDS = [
   "field day",
   "special event station",
   "DXpedition",
-  "on-air activities",
+  "on air activities",
   "ham radio schedule",
   "UTC event calendar",
   "publish ham radio event",
@@ -26,7 +26,7 @@ export const SEO_KEYWORDS = [
 ] as const;
 
 export const DEFAULT_DESCRIPTION =
-  "QSO Dates is the worldwide ham radio activity calendar — find and publish amateur radio contests, POTA and SOTA activations, DXpeditions, field days, nets, and special event stations.";
+  "QSO Dates is the worldwide ham radio activity calendar. Find and publish amateur radio contests, POTA and SOTA activations, DXpeditions, field days, nets, and special event stations.";
 
 type PageMeta = {
   title: string;

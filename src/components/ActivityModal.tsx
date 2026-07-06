@@ -9,7 +9,7 @@ interface Props {
   activityTypes: ActivityType[];
   editing?: Activity | null;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved?: (message?: string) => void;
 }
 
 async function uploadImage(file: File): Promise<string> {
@@ -84,7 +84,7 @@ function ImageUploadField({
             <>
               <ImagePlus size={22} />
               <span>Click to upload image</span>
-              <small className="no-cap">JPEG, PNG, WebP or GIF · max 5 MB</small>
+              <small className="no-cap">JPEG, PNG, WebP or GIF, max 5 MB</small>
             </>
           )}
         </button>
@@ -185,9 +185,9 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
         return;
       }
 
-      onSaved();
+      onSaved?.(data.message || (data.pendingApproval ? "Submitted for admin approval." : "Activity published!"));
     } catch {
-      setError("Network error — could not reach the server.");
+      setError("Could not reach the server. Try again in a moment.");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAuthCallbackUrl } from "@/lib/siteUrl";
-import { sendVerificationEmail } from "@/lib/mail";
+import { sendVerificationEmail, toMailUserError } from "@/lib/mail";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { NextResponse } from "next/server";
 
@@ -62,9 +62,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, message: "Verification email sent." });
   } catch (err) {
     console.error("Resend verification error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not send verification email." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: toMailUserError(err) }, { status: 500 });
   }
 }

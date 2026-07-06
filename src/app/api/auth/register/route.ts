@@ -1,7 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveUserRole } from "@/lib/admin";
 import { generateApiKey } from "@/lib/apiKey";
-import { sendAdminRegistrationNotificationEmail, sendVerificationEmail } from "@/lib/mail";
+import { checkPassword } from "@/lib/passwordUtils";
+import { sendAdminRegistrationNotificationEmail, sendVerificationEmail, toMailUserError } from "@/lib/mail";
 import { getAuthCallbackUrl, buildEmailVerificationUrl } from "@/lib/siteUrl";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { NextResponse } from "next/server";
@@ -28,8 +29,11 @@ export async function POST(request: Request) {
     if (!EMAIL_RE.test(email)) {
       return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
     }
-    if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
+    if (!checkPassword(password).passed) {
+      return NextResponse.json(
+        { error: "Password must be at least 8 characters with upper, lower, number, and symbol." },
+        { status: 400 }
+      );
     }
 
     const supabase = createAdminClient();
@@ -61,12 +65,20 @@ export async function POST(request: Request) {
       throw new Error("Failed to generate verification link.");
     }
 
+    // Allow sign-in immediately; verification email is optional welcome mail.
+    const { error: confirmError } = await supabase.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+    });
+    if (confirmError) {
+      console.error("Email confirm error:", confirmError);
+    }
+
     const verifyUrl = buildEmailVerificationUrl(hashedToken);
 
     const callsign = placeholderCallsign(userId);
     const apiKey = generateApiKey();
 
-    await supabase.from("profiles").upsert({
+    const { error: profileError } = await supabase.from("profiles").upsert({
       id: userId,
       name: displayName,
       callsign,
@@ -75,28 +87,39 @@ export async function POST(request: Request) {
       api_key: apiKey,
     });
 
-    await sendVerificationEmail({ to: email, displayName, verifyUrl });
+    if (profileError) {
+      console.error("Profile upsert error:", profileError);
+      throw new Error("Account was created but profile setup failed. Please contact support.");
+    }
 
-    try {
-      const notifyEmail = process.env.NOTIFY_EMAIL ?? process.env.SMTP_EMAIL;
-      if (notifyEmail) {
-        await sendAdminRegistrationNotificationEmail({
-          to: notifyEmail,
-          displayName,
-          email,
-        });
-      }
-    } catch (emailErr) {
-      console.error("Admin registration notification error:", emailErr);
+    void sendVerificationEmail({ to: email, displayName, verifyUrl }).catch((emailErr) => {
+      console.error("Verification email error:", emailErr);
+    });
+
+    const notifyEmail = process.env.NOTIFY_EMAIL ?? process.env.SMTP_EMAIL;
+    if (notifyEmail) {
+      void sendAdminRegistrationNotificationEmail({
+        to: notifyEmail,
+        displayName,
+        email,
+      }).catch((emailErr) => {
+        console.error("Admin registration notification error:", emailErr);
+      });
     }
 
     return NextResponse.json({
       ok: true,
-      message: "Verification email sent. Please check your inbox.",
+      message: "Account created. You can sign in now.",
     });
   } catch (err) {
     console.error("Register API error:", err);
-    const message = err instanceof Error ? err.message : "Registration failed.";
+    const raw = err instanceof Error ? err.message : "Registration failed.";
+    const message =
+      raw.toLowerCase().includes("535") ||
+      raw.toLowerCase().includes("badcredentials") ||
+      raw.toLowerCase().includes("smtp")
+        ? toMailUserError(err)
+        : raw;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

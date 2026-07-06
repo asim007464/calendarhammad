@@ -24,8 +24,8 @@ export default function DownloadsPage() {
           <BrandMark link={false} size="auth" />
           <h1>Download Ham Radio Activities</h1>
           <p className="section-sub">
-            Export published amateur radio events as JSON or CSV — ham radio contests, POTA, SOTA, and more.
-            Free to use — no API key required.
+            Export published amateur radio events as JSON or CSV: ham radio contests, POTA, SOTA, and more.
+            Free to use, no API key required.
           </p>
         </div>
 

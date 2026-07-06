@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Loader2, ArrowRight, ArrowLeft, CheckCircle2, Eye, EyeOff,
+  Loader2, ArrowRight, ArrowLeft, CheckCircle2,
 } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
+import { PasswordInput, passwordFieldAttrs } from "@/components/PasswordInput";
 import { checkPassword } from "@/lib/passwordUtils";
 
 type Step = "email" | "otp" | "password" | "done";
@@ -148,8 +149,11 @@ export default function ForgotPasswordPage() {
             </label>
             <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
               {loading ? <Loader2 size={15} className="spin" /> : null}
-              Send code <ArrowRight size={14} />
+              {loading ? "Sending code…" : "Send code"} {!loading && <ArrowRight size={14} />}
             </button>
+            {loading && (
+              <p className="auth-hint">Sending your reset code. This can take up to a minute.</p>
+            )}
           </form>
         )}
 
@@ -183,22 +187,16 @@ export default function ForgotPasswordPage() {
 
         {step === "password" && (
           <form onSubmit={handleResetPassword} className="auth-form">
-            <label className="field">
-              <span>New password</span>
-              <div className="auth-password-wrap">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 8 chars, upper, lower, number, symbol"
-                  autoComplete="new-password"
-                  required
-                  className="no-cap"
-                />
-                <button type="button" className="auth-eye" onClick={() => setShowPassword((v) => !v)}>
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+            <PasswordInput
+              label="New password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min 8 chars, upper, lower, number, symbol"
+              autoComplete="new-password"
+              required
+              visible={showPassword}
+              onVisibleChange={setShowPassword}
+            >
               {password.length > 0 && (
                 <ul className="pw-checks">
                   {pwStrength.checks.map((check) => (
@@ -208,11 +206,12 @@ export default function ForgotPasswordPage() {
                   ))}
                 </ul>
               )}
-            </label>
-            <label className="field">
-              <span>Confirm new password</span>
+            </PasswordInput>
+            <div className="field">
+              <label htmlFor="confirm-new-password">Confirm new password</label>
               <input
-                type={showPassword ? "text" : "password"}
+                id="confirm-new-password"
+                {...passwordFieldAttrs(showPassword)}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat your password"
@@ -220,7 +219,7 @@ export default function ForgotPasswordPage() {
                 required
                 className="no-cap"
               />
-            </label>
+            </div>
             <button type="button" className="auth-back-btn" onClick={() => setStep("otp")}>
               <ArrowLeft size={14} /> Back to code
             </button>

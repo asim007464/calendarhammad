@@ -21,7 +21,7 @@ export function getAuthCallbackUrl(): string {
   return `${getSiteUrl()}/auth/callback`;
 }
 
-/** Direct app callback — avoids PKCE failures from admin generateLink action_link */
+// Direct app callback to avoid PKCE issues from admin generateLink.
 export function buildEmailVerificationUrl(hashedToken: string): string {
   const params = new URLSearchParams({
     token_hash: hashedToken,

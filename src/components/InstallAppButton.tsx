@@ -30,14 +30,14 @@ function InstallHelpModal({ onClose, ios }: { onClose: () => void; ios: boolean 
             <li>Open this page in <strong>Safari</strong>.</li>
             <li>Tap <Share size={14} className="inline-icon" /> <strong>Share</strong>.</li>
             <li>Tap <strong>Add to Home Screen</strong>.</li>
-            <li>Tap <strong>Add</strong> — QSO Dates appears on your home screen.</li>
+            <li>Tap <strong>Add</strong>. QSO Dates appears on your home screen.</li>
           </ol>
         ) : (
           <ol className="ios-steps">
             <li>Open <strong>qsodates.com</strong> in <strong>Chrome</strong> on your phone.</li>
             <li>Tap the browser menu (⋮) in the top right.</li>
             <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
-            <li>Confirm — QSO Dates will appear on your home screen.</li>
+            <li>Confirm. QSO Dates will appear on your home screen.</li>
           </ol>
         )}
         <button type="button" className="btn btn-primary" style={{ marginTop: 16, width: "100%" }} onClick={onClose}>

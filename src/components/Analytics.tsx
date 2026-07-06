@@ -37,7 +37,7 @@ export function AnalyticsDashboard() {
       <div className="panel analytics-card">
         <h3>Google Analytics</h3>
         <p className="section-sub">
-          Property <strong>{GA_ID}</strong> — view full reports in{" "}
+          Property <strong>{GA_ID}</strong>. View full reports in{" "}
           <a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer">
             Google Analytics
           </a>
@@ -56,7 +56,7 @@ export function AnalyticsDashboard() {
       <div className="panel analytics-card">
         <h3>Microsoft Clarity</h3>
         <p className="section-sub">
-          Project <strong>{CLARITY_ID}</strong> — session recordings &amp; heatmaps in{" "}
+          Project <strong>{CLARITY_ID}</strong>. Session recordings and heatmaps in{" "}
           <a href="https://clarity.microsoft.com/" target="_blank" rel="noopener noreferrer">
             Clarity Dashboard
           </a>

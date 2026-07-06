@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, IBM_Plex_Mono, Orbitron } from "next/font/google";
 import { AnalyticsScripts } from "@/components/Analytics";
+import { AppProviders } from "@/components/AppProviders";
 import PwaRegistrar from "@/components/PwaRegistrar";
 import { PWA_THEME_COLOR } from "@/app/manifest";
 import {
@@ -45,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="bg-grid" aria-hidden="true" />
         <div className="bg-glow bg-glow-a" aria-hidden="true" />
         <div className="bg-glow bg-glow-b" aria-hidden="true" />
-        {children}
+        <AppProviders>{children}</AppProviders>
         <PwaRegistrar />
         <AnalyticsScripts />
       </body>

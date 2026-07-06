@@ -3,22 +3,31 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, LogOut } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import InstallAppButton from "@/components/InstallAppButton";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 
 interface TopbarProps {
-  currentView?: "calendar" | "list";
-  onViewChange?: (v: "calendar" | "list") => void;
   onAddActivity?: () => void;
-  onSupport?: () => void;
   onLoginRequired?: () => void;
 }
 
-export function Topbar({ currentView, onViewChange, onAddActivity, onSupport, onLoginRequired }: TopbarProps) {
+const MAIN_NAV = [
+  { id: "home", label: "Home", href: "/" },
+  { id: "activities", label: "Activities", href: "/activities" },
+  { id: "calendar", label: "Calendar", href: "/calendar" },
+  { id: "map", label: "Map", href: "/map" },
+  { id: "api", label: "API", href: "/api-docs" },
+  { id: "documents", label: "Documents", href: "/docs" },
+  { id: "about", label: "About", href: "/about" },
+] as const;
+
+export function Topbar({ onAddActivity, onLoginRequired }: TopbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { isLoggedIn, canAccessAdmin, loading } = useAuth();
@@ -47,10 +56,12 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport, on
 
   const closeMenu = () => setMenuOpen(false);
 
+  const loginHref = `/login?next=${encodeURIComponent(pathname || "/")}`;
+
   const goToLogin = () => {
     closeMenu();
     onLoginRequired?.();
-    router.push("/login?next=/");
+    router.push(`/login?next=${encodeURIComponent(pathname || "/")}`);
   };
 
   const handleAddActivity = () => {
@@ -62,15 +73,25 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport, on
     onAddActivity?.();
   };
 
+  async function handleLogout() {
+    closeMenu();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
+
+  function navClass(href: string) {
+    const active =
+      href === "/"
+        ? pathname === "/"
+        : pathname === href || pathname.startsWith(`${href}/`);
+    return active ? "nav-link active" : "nav-link";
+  }
+
   const mobileMenu = menuOpen && mounted
     ? createPortal(
         <>
-          <button
-            type="button"
-            className="mobile-overlay"
-            aria-label="Close menu"
-            onClick={closeMenu}
-          />
+          <button type="button" className="mobile-overlay" aria-label="Close menu" onClick={closeMenu} />
           <div className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Site menu">
             <div className="mobile-drawer-head">
               <BrandMark link={false} size="nav" />
@@ -79,37 +100,33 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport, on
               </button>
             </div>
             <nav className="mobile-drawer-nav">
-              <button type="button" className="nav-link" onClick={() => { onViewChange?.("calendar"); closeMenu(); }}>Calendar</button>
-              <button type="button" className="nav-link" onClick={() => { onViewChange?.("list"); closeMenu(); }}>Activities</button>
+              {MAIN_NAV.map((item) => (
+                <Link key={item.id} href={item.href} className={navClass(item.href)} onClick={closeMenu}>
+                  {item.label}
+                </Link>
+              ))}
               <Link href="/dashboard" className="nav-link" onClick={closeMenu}>Profile</Link>
               {!loading && canAccessAdmin && (
                 <Link href="/admin" className="nav-link" onClick={closeMenu}>Admin</Link>
               )}
-              <Link href="/docs" className="nav-link" onClick={closeMenu}>API Docs</Link>
-              <Link href="/api-docs" className="nav-link" onClick={closeMenu}>API Portal</Link>
               <Link href="/downloads" className="nav-link" onClick={closeMenu}>Downloads</Link>
-              <Link href="/contact" className="nav-link" onClick={closeMenu}>Contact</Link>
-              {isLoggedIn && (
-                <Link href="/dashboard" className="nav-link" onClick={closeMenu}>Account</Link>
-              )}
             </nav>
             <div className="mobile-drawer-actions">
               <InstallAppButton variant="card" />
-              {!loading && !isLoggedIn && (
-                <>
-                  <Link href="/login?next=/" className="btn btn-primary" onClick={closeMenu}>
-                    Sign In
-                  </Link>
-                  <Link href="/register?next=/" className="btn btn-outline" onClick={closeMenu}>
-                    Register Free
-                  </Link>
-                </>
-              )}
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { onSupport?.(); closeMenu(); }}>Support</button>
+              <Link href="/contact" className="btn btn-ghost btn-sm" onClick={closeMenu}>Contact</Link>
               {isLoggedIn ? (
-                <button type="button" className="btn btn-primary" onClick={handleAddActivity}>Add Activity</button>
+                <>
+                  <Link href="/dashboard" className="btn btn-ghost btn-sm" onClick={closeMenu}>Account</Link>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={handleLogout}>
+                    <LogOut size={14} aria-hidden="true" />
+                    Logout
+                  </button>
+                  <button type="button" className="btn btn-primary" onClick={handleAddActivity}>Add Activity</button>
+                </>
               ) : (
-                <button type="button" className="btn btn-primary" onClick={goToLogin}>Sign In to Add Activity</button>
+                <Link href={loginHref} className="btn btn-primary" onClick={closeMenu}>
+                  Sign In to Add Activity
+                </Link>
               )}
             </div>
           </div>
@@ -122,47 +139,42 @@ export function Topbar({ currentView, onViewChange, onAddActivity, onSupport, on
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          <Link href="/" className="brand">
+          <Link href="/" className="brand" aria-label="QSO Dates home">
             <BrandMark link={false} size="nav" />
           </Link>
 
           <nav className="topnav desktop-only" aria-label="Main navigation">
-            <button
-              type="button"
-              className={`nav-link ${currentView === "calendar" ? "active" : ""}`}
-              onClick={() => onViewChange?.("calendar")}
-            >
-              Calendar
-            </button>
-            <button
-              type="button"
-              className={`nav-link ${currentView === "list" ? "active" : ""}`}
-              onClick={() => onViewChange?.("list")}
-            >
-              Activities
-            </button>
-            <Link href="/dashboard" className="nav-link">Profile</Link>
+            {MAIN_NAV.map((item) => (
+              <Link key={item.id} href={item.href} className={navClass(item.href)}>
+                {item.label}
+              </Link>
+            ))}
             {!loading && canAccessAdmin && (
-              <Link href="/admin" className="nav-link">Admin</Link>
+              <Link href="/admin" className={navClass("/admin")}>Admin</Link>
             )}
-            <Link href="/docs" className="nav-link">API</Link>
-            <Link href="/downloads" className="nav-link">Downloads</Link>
           </nav>
 
           <div className="topbar-actions desktop-only">
             <InstallAppButton />
-            <button type="button" className="btn btn-ghost btn-sm" onClick={onSupport}>Support</button>
-            {isLoggedIn ? (
-              <Link href="/dashboard" className="btn btn-ghost btn-sm">Account</Link>
-            ) : (
+            <Link href="/contact" className="btn btn-ghost btn-sm">Contact</Link>
+            {isLoggedIn && (
               <>
-                <Link href="/login?next=/" className="btn btn-ghost btn-sm">Sign In</Link>
-                <Link href="/register?next=/" className="btn btn-ghost btn-sm">Register</Link>
+                <Link href="/dashboard" className="btn btn-ghost btn-sm">Account</Link>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={handleLogout}>
+                  <LogOut size={14} aria-hidden="true" />
+                  Logout
+                </button>
               </>
             )}
-            <button type="button" className="btn btn-primary btn-sm" onClick={handleAddActivity}>
-              {isLoggedIn ? "Add Activity" : "Sign In to Add"}
-            </button>
+            {isLoggedIn ? (
+              <button type="button" className="btn btn-primary btn-sm" onClick={handleAddActivity}>
+                Add Activity
+              </button>
+            ) : (
+              <Link href={loginHref} className="btn btn-primary btn-sm">
+                Sign In to Add
+              </Link>
+            )}
           </div>
 
           <button

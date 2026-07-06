@@ -4,12 +4,12 @@ import { fmtUTC } from "./activity-utils";
 export function buildSocialText(a: Activity): string {
   const lines = [
     `📻 ${a.name}`,
-    `${a.callsign ? `Call: ${a.callsign} · ` : ""}${a.type_name}`,
+    `${a.callsign ? `Call: ${a.callsign}, ` : ""}${a.type_name}`,
     `📅 ${fmtUTC(a.start_at)}`,
     a.country ? `📍 ${a.country}` : "",
     a.description ? a.description.slice(0, 200) : "",
     "",
-    "Posted on QSO Dates — www.qsodates.com",
+    "Posted on QSO Dates, www.qsodates.com",
     "#HamRadio #AmateurRadio #QSODates",
   ].filter(Boolean);
   return lines.join("\n");
@@ -43,7 +43,7 @@ export async function postToX(text: string) {
   }
 
   // OAuth 1.0a requires a signing library in production; queue for now
-  return { ok: false, error: "Configure X API credentials — post queued" };
+  return { ok: false, error: "Configure X API credentials. Post queued." };
 }
 
 export async function postToInstagram(caption: string, imageUrl?: string | null) {

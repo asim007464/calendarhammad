@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
+import { PasswordInput, passwordFieldAttrs } from "@/components/PasswordInput";
 import { checkPassword } from "@/lib/passwordUtils";
 import { getSafeRedirectPath } from "@/lib/authRedirect";
 
@@ -48,7 +49,12 @@ export default function RegisterPage() {
       if (!res.ok) throw new Error(data.error ?? "Registration failed.");
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed.");
+      const msg = err instanceof Error ? err.message : "Registration failed.";
+      if (msg.toLowerCase().includes("already exists")) {
+        setError("An account with this email already exists. Try signing in.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -60,12 +66,17 @@ export default function RegisterPage() {
         <div className="auth-card panel">
           <div className="auth-done">
             <CheckCircle2 size={40} className="auth-done-icon" />
-            <h1>Check Your Email</h1>
+            <h1>Account Created</h1>
             <p className="section-sub">
-              We sent a verification link to <strong className="no-cap">{email}</strong>.
-              Click the link to activate your account.
+              Your account is ready. Sign in with <strong className="no-cap">{email}</strong> and your password.
+              {redirectTo !== "/" && " You will return to where you left off."}
             </p>
-            <Link href="/login" className="btn btn-primary auth-submit">Go to sign in</Link>
+            <Link
+              href={redirectTo === "/" ? "/login" : `/login?next=${encodeURIComponent(redirectTo)}`}
+              className="btn btn-primary auth-submit"
+            >
+              Go to sign in
+            </Link>
           </div>
         </div>
       </div>
@@ -92,20 +103,14 @@ export default function RegisterPage() {
             <span>Email address</span>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="no-cap" />
           </label>
-          <label className="field">
-            <span>Password</span>
-            <div className="auth-password-wrap">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="no-cap"
-              />
-              <button type="button" className="auth-eye" onClick={() => setShowPassword((v) => !v)}>
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+          <PasswordInput
+            label="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            visible={showPassword}
+            onVisibleChange={setShowPassword}
+          >
             {password.length > 0 && (
               <ul className="pw-checks">
                 {pwStrength.checks.map((check) => (
@@ -113,17 +118,18 @@ export default function RegisterPage() {
                 ))}
               </ul>
             )}
-          </label>
-          <label className="field">
-            <span>Confirm password</span>
+          </PasswordInput>
+          <div className="field">
+            <label htmlFor="confirm-password">Confirm password</label>
             <input
-              type={showPassword ? "text" : "password"}
+              id="confirm-password"
+              {...passwordFieldAttrs(showPassword)}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               className="no-cap"
             />
-          </label>
+          </div>
           <label className="auth-checkbox">
             <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
             <span>
@@ -135,8 +141,11 @@ export default function RegisterPage() {
           </label>
           <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
             {loading ? <Loader2 size={15} className="spin" /> : null}
-            Create account
+            {loading ? "Creating account…" : "Create account"}
           </button>
+          {loading && (
+            <p className="auth-hint">Setting up your account. This may take a few seconds.</p>
+          )}
         </form>
 
         <p className="auth-footer-link">
