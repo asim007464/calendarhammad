@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmEmailWithOtp, EMAIL_RE } from "@/lib/emailVerification";
+import { notifyAdminEmail, sendAdminRegistrationNotificationEmail } from "@/lib/mail";
 import { enforceRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
@@ -22,6 +23,20 @@ export async function POST(request: Request) {
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name, email")
+      .eq("email", email)
+      .maybeSingle();
+
+    await notifyAdminEmail((to) =>
+      sendAdminRegistrationNotificationEmail({
+        to,
+        displayName: profile?.name || email.split("@")[0],
+        email: profile?.email || email,
+      })
+    );
 
     return NextResponse.json({
       ok: true,

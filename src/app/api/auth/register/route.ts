@@ -3,7 +3,7 @@ import { resolveUserRole } from "@/lib/admin";
 import { generateApiKey } from "@/lib/apiKey";
 import { checkPassword } from "@/lib/passwordUtils";
 import { issueEmailVerificationOtp } from "@/lib/emailVerification";
-import { sendAdminRegistrationNotificationEmail, toMailUserError } from "@/lib/mail";
+import { toMailUserError } from "@/lib/mail";
 import { getAuthCallbackUrl } from "@/lib/siteUrl";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { NextResponse } from "next/server";
@@ -90,17 +90,6 @@ export async function POST(request: Request) {
     }
 
     await issueEmailVerificationOtp(supabase, email, displayName);
-
-    const notifyEmail = process.env.NOTIFY_EMAIL ?? process.env.SMTP_EMAIL;
-    if (notifyEmail) {
-      void sendAdminRegistrationNotificationEmail({
-        to: notifyEmail,
-        displayName,
-        email,
-      }).catch((emailErr) => {
-        console.error("Admin registration notification error:", emailErr);
-      });
-    }
 
     return NextResponse.json({
       ok: true,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { verifyAdminSession } from "@/lib/adminAuth";
-import { sendAdminSupportNotificationEmail } from "@/lib/mail";
+import { notifyAdminEmail, sendAdminSupportNotificationEmail } from "@/lib/mail";
 
 export async function GET(request: Request) {
   const session = await verifyAdminSession(request);
@@ -70,20 +70,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Could not save your message. Please try again." }, { status: 500 });
     }
 
-    const notifyEmail = process.env.NOTIFY_EMAIL ?? process.env.SMTP_EMAIL;
-    if (notifyEmail) {
-      try {
-        await sendAdminSupportNotificationEmail({
-          to: notifyEmail,
-          userName: data.user_name,
-          email: data.email,
-          subject: data.subject,
-          message: data.message,
-        });
-      } catch (err) {
-        console.error("[support] admin notify email failed:", err);
-      }
-    }
+    await notifyAdminEmail((to) =>
+      sendAdminSupportNotificationEmail({
+        to,
+        userName: data.user_name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+      })
+    );
 
     return NextResponse.json(data, { status: 201 });
   } catch (err) {

@@ -45,6 +45,7 @@ Vercel → **Settings → Environment Variables** → add for Production, Previe
 | `NEXT_PUBLIC_SITE_URL` | `https://www.qsodates.com` |
 | `SMTP_EMAIL` | Gmail address used to send OTP emails |
 | `SMTP_APP_PASSWORD` | Gmail [App Password](https://myaccount.google.com/apppasswords) (16 chars, no spaces needed) |
+| `NOTIFY_EMAIL` | Admin inbox — new registrations, activities, and contact messages |
 | `ADMIN_EMAIL` | Super-admin email for admin panel |
 | `DEVELOPER_UNLOCK_SECRET` | Emergency site unlock secret |
 | `OPENAI_API_KEY` | Optional — AI chat assistant |

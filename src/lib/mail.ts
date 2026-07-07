@@ -12,6 +12,39 @@ function getAuthTransporter() {
   return nodemailer.createTransport({ service: "gmail", auth: { user, pass } });
 }
 
+/** Admin inbox for new users, activities, and contact messages. */
+export function getNotifyEmail(): string | null {
+  const notify = process.env.NOTIFY_EMAIL?.trim();
+  if (notify) return notify;
+  const smtp = process.env.SMTP_EMAIL?.trim();
+  return smtp || null;
+}
+
+export function notifyAdminInBackground(send: (to: string) => Promise<void>): void {
+  const to = getNotifyEmail();
+  if (!to) {
+    console.warn("[notify] NOTIFY_EMAIL is not set; skipping admin notification.");
+    return;
+  }
+  void send(to).catch((err) => {
+    console.error("[notify] admin email failed:", err);
+  });
+}
+
+/** Await admin notification so serverless handlers do not exit before SMTP finishes. */
+export async function notifyAdminEmail(send: (to: string) => Promise<void>): Promise<void> {
+  const to = getNotifyEmail();
+  if (!to) {
+    console.warn("[notify] NOTIFY_EMAIL is not set; skipping admin notification.");
+    return;
+  }
+  try {
+    await send(to);
+  } catch (err) {
+    console.error("[notify] admin email failed:", err);
+  }
+}
+
 // Don't show raw SMTP errors to users.
 export function toMailUserError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
@@ -227,7 +260,7 @@ export async function sendAdminRegistrationNotificationEmail({
     to,
     subject: `New user registered: ${displayName}`,
     text: [
-      "A new user registered on QSO Dates.",
+      "A new user completed registration on QSO Dates.",
       "",
       `Name: ${displayName}`,
       `Email: ${email}`,
@@ -241,6 +274,75 @@ export async function sendAdminRegistrationNotificationEmail({
         <p style="margin:0 0 16px;color:rgba(198,255,52,0.75)">Email: ${email}</p>
         <a href="${adminHref}" style="display:inline-block;background:#c6ff34;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
           Open admin users
+        </a>
+      `
+    ),
+  });
+}
+
+export async function sendAdminActivityNotificationEmail({
+  to,
+  activityName,
+  activityType,
+  submitterName,
+  submitterEmail,
+  callsign,
+  status,
+  startAt,
+  country,
+  activityId,
+}: {
+  to: string;
+  activityName: string;
+  activityType: string;
+  submitterName: string;
+  submitterEmail: string;
+  callsign?: string;
+  status: "published" | "pending_review";
+  startAt: string;
+  country?: string;
+  activityId: string;
+}) {
+  const from = process.env.SMTP_EMAIL!.trim();
+  const transporter = getAuthTransporter();
+  const adminHref = `${getSiteUrl()}/admin/activities`;
+  const statusLabel = status === "pending_review" ? "Pending approval" : "Published";
+  const startLabel = new Date(startAt).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+
+  await transporter.sendMail({
+    from: `"QSO Dates" <${from}>`,
+    to,
+    subject: `New activity: ${activityName}`,
+    text: [
+      "A user submitted a ham radio activity on QSO Dates.",
+      "",
+      `Activity: ${activityName}`,
+      `Type: ${activityType}`,
+      `Status: ${statusLabel}`,
+      `Start: ${startLabel}`,
+      country ? `Country: ${country}` : "",
+      callsign ? `Callsign: ${callsign}` : "",
+      "",
+      `Submitted by: ${submitterName}`,
+      `Email: ${submitterEmail}`,
+      "",
+      `Review in admin: ${adminHref}`,
+      `Activity ID: ${activityId}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    html: emailShell(
+      "QSO Dates: New activity",
+      `
+        <p style="margin:0 0 8px;font-size:16px"><strong>${activityName}</strong></p>
+        <p style="margin:0 0 4px;color:rgba(198,255,52,0.75)">${activityType} · ${statusLabel}</p>
+        <p style="margin:0 0 12px;color:rgba(198,255,52,0.55);font-size:13px">Start: ${startLabel}${country ? ` · ${country}` : ""}${callsign ? ` · ${callsign}` : ""}</p>
+        <p style="margin:0 0 16px;line-height:1.5">
+          Submitted by <strong>${submitterName}</strong><br/>
+          <span style="color:rgba(198,255,52,0.75)">${submitterEmail}</span>
+        </p>
+        <a href="${adminHref}" style="display:inline-block;background:#c6ff34;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
+          Review activities
         </a>
       `
     ),

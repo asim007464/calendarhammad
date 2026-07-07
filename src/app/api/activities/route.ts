@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
 import { normalizeActivityBody } from "@/lib/activity-api";
 import { isAdminEmail } from "@/lib/admin";
+import { notifyAdminEmail, sendAdminActivityNotificationEmail } from "@/lib/mail";
 import type { Activity } from "@/types/database";
 const DEMO_ACTIVITIES: Activity[] = [
   {
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
 
     const { data: profile } = await admin
       .from("profiles")
-      .select("role, email")
+      .select("role, email, name, callsign")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -94,6 +95,21 @@ export async function POST(request: Request) {
       event_type: "social_post",
       metadata: { action: "created", status },
     });
+
+    await notifyAdminEmail((to) =>
+      sendAdminActivityNotificationEmail({
+        to,
+        activityId: data.id,
+        activityName: data.name,
+        activityType: data.type_name || "Other",
+        submitterName: profile?.name || user.email?.split("@")[0] || "User",
+        submitterEmail: profile?.email || user.email || "",
+        callsign: data.callsign || profile?.callsign || undefined,
+        status: status as "published" | "pending_review",
+        startAt: data.start_at,
+        country: data.country || undefined,
+      })
+    );
 
     if (status === "published") {
       fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/social/post`, {
