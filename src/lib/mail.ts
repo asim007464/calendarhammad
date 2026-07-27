@@ -67,11 +67,11 @@ export function toMailUserError(err: unknown): string {
 
 function emailShell(title: string, bodyHtml: string) {
   return `
-    <div style="font-family:DM Sans,system-ui,sans-serif;max-width:520px;margin:0 auto;color:#f0ffd6">
-      <div style="background:#c6ff34;color:#0a0c08;padding:20px 24px;border-radius:12px 12px 0 0">
+    <div style="font-family:DM Sans,system-ui,sans-serif;max-width:520px;margin:0 auto;color:#ffe8e5">
+      <div style="background:#FF5C4D;color:#0a0c08;padding:20px 24px;border-radius:12px 12px 0 0">
         <strong style="font-size:18px;letter-spacing:0.05em">${title}</strong>
       </div>
-      <div style="background:#121408;border:1px solid rgba(198,255,52,0.15);border-top:none;padding:28px 24px;border-radius:0 0 12px 12px">
+      <div style="background:#140e0e;border:1px solid rgba(255,92,77,0.15);border-top:none;padding:28px 24px;border-radius:0 0 12px 12px">
         ${bodyHtml}
       </div>
     </div>
@@ -110,15 +110,15 @@ export async function sendVerificationEmail({
       "QSO Dates",
       `
         <p style="margin:0 0 16px">Hi <strong>${displayName}</strong>,</p>
-        <p style="margin:0 0 20px;color:rgba(198,255,52,0.75);line-height:1.6">
+        <p style="margin:0 0 20px;color:rgba(255,92,77,0.75);line-height:1.6">
           Thanks for registering. Please verify your email to activate your account and manage ham radio activities.
         </p>
-        <a href="${verifyUrl}" style="display:inline-block;background:#c6ff34;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
+        <a href="${verifyUrl}" style="display:inline-block;background:#FF5C4D;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
           Verify email address
         </a>
-        <p style="margin:24px 0 0;font-size:13px;color:rgba(198,255,52,0.45);line-height:1.5">
+        <p style="margin:24px 0 0;font-size:13px;color:rgba(255,92,77,0.45);line-height:1.5">
           Or copy this link:<br/>
-          <a href="${verifyUrl}" style="color:#c6ff34;word-break:break-all">${verifyUrl}</a>
+          <a href="${verifyUrl}" style="color:#FF5C4D;word-break:break-all">${verifyUrl}</a>
         </p>
       `
     ),
@@ -157,9 +157,9 @@ export async function sendRegistrationOtpEmail({
       "QSO Dates",
       `
         <p style="margin:0 0 12px">Hi <strong>${displayName}</strong>,</p>
-        <p style="margin:0 0 8px;color:rgba(198,255,52,0.75)">Enter this code to verify your email:</p>
-        <p style="margin:0 0 20px;font-size:32px;font-weight:700;letter-spacing:0.3em;font-family:monospace;color:#c6ff34">${code}</p>
-        <p style="margin:0;font-size:13px;color:rgba(198,255,52,0.45)">This code expires in 10 minutes.</p>
+        <p style="margin:0 0 8px;color:rgba(255,92,77,0.75)">Enter this code to verify your email:</p>
+        <p style="margin:0 0 20px;font-size:32px;font-weight:700;letter-spacing:0.3em;font-family:monospace;color:#FF5C4D">${code}</p>
+        <p style="margin:0;font-size:13px;color:rgba(255,92,77,0.45)">This code expires in 10 minutes.</p>
       `
     ),
   });
@@ -186,9 +186,9 @@ export async function sendPasswordResetOtpEmail({ to, code }: { to: string; code
       "QSO Dates",
       `
         <p style="margin:0 0 12px">You requested a password reset.</p>
-        <p style="margin:0 0 8px;color:rgba(198,255,52,0.75)">Enter this 6-digit code:</p>
-        <p style="margin:0 0 20px;font-size:32px;font-weight:700;letter-spacing:0.3em;font-family:monospace;color:#c6ff34">${code}</p>
-        <p style="margin:0;font-size:13px;color:rgba(198,255,52,0.45)">This code expires in 10 minutes.</p>
+        <p style="margin:0 0 8px;color:rgba(255,92,77,0.75)">Enter this 6-digit code:</p>
+        <p style="margin:0 0 20px;font-size:32px;font-weight:700;letter-spacing:0.3em;font-family:monospace;color:#FF5C4D">${code}</p>
+        <p style="margin:0;font-size:13px;color:rgba(255,92,77,0.45)">This code expires in 10 minutes.</p>
       `
     ),
   });
@@ -232,9 +232,9 @@ export async function sendAdminSupportNotificationEmail({
       "QSO Dates: Support",
       `
         <p style="margin:0 0 8px"><strong>${userName}</strong>${email ? `, ${email}` : ""}</p>
-        <p style="margin:0 0 12px;color:rgba(198,255,52,0.75)">${subject}</p>
+        <p style="margin:0 0 12px;color:rgba(255,92,77,0.75)">${subject}</p>
         <p style="margin:0 0 20px;white-space:pre-wrap;line-height:1.6">${message}</p>
-        <a href="${adminHref}" style="display:inline-block;background:#c6ff34;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
+        <a href="${adminHref}" style="display:inline-block;background:#FF5C4D;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
           Open support inbox
         </a>
       `,
@@ -271,8 +271,8 @@ export async function sendAdminRegistrationNotificationEmail({
       "QSO Dates: New user",
       `
         <p style="margin:0 0 12px"><strong>${displayName}</strong></p>
-        <p style="margin:0 0 16px;color:rgba(198,255,52,0.75)">Email: ${email}</p>
-        <a href="${adminHref}" style="display:inline-block;background:#c6ff34;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
+        <p style="margin:0 0 16px;color:rgba(255,92,77,0.75)">Email: ${email}</p>
+        <a href="${adminHref}" style="display:inline-block;background:#FF5C4D;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
           Open admin users
         </a>
       `
@@ -335,13 +335,13 @@ export async function sendAdminActivityNotificationEmail({
       "QSO Dates: New activity",
       `
         <p style="margin:0 0 8px;font-size:16px"><strong>${activityName}</strong></p>
-        <p style="margin:0 0 4px;color:rgba(198,255,52,0.75)">${activityType} · ${statusLabel}</p>
-        <p style="margin:0 0 12px;color:rgba(198,255,52,0.55);font-size:13px">Start: ${startLabel}${country ? ` · ${country}` : ""}${callsign ? ` · ${callsign}` : ""}</p>
+        <p style="margin:0 0 4px;color:rgba(255,92,77,0.75)">${activityType} · ${statusLabel}</p>
+        <p style="margin:0 0 12px;color:rgba(255,92,77,0.55);font-size:13px">Start: ${startLabel}${country ? ` · ${country}` : ""}${callsign ? ` · ${callsign}` : ""}</p>
         <p style="margin:0 0 16px;line-height:1.5">
           Submitted by <strong>${submitterName}</strong><br/>
-          <span style="color:rgba(198,255,52,0.75)">${submitterEmail}</span>
+          <span style="color:rgba(255,92,77,0.75)">${submitterEmail}</span>
         </p>
-        <a href="${adminHref}" style="display:inline-block;background:#c6ff34;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
+        <a href="${adminHref}" style="display:inline-block;background:#FF5C4D;color:#0a0c08;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">
           Review activities
         </a>
       `

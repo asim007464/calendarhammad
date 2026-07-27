@@ -1,0 +1,41 @@
+import type { WordmarkSize } from "@/components/LogoWordmark";
+
+const BRAND_COLOR = "#FF5C4D";
+
+interface SiteWordmarkLogoProps {
+  size?: WordmarkSize;
+  className?: string;
+}
+
+/**
+ * Futuristic geometric wordmark — angular paths, 45° chamfers, uniform bar weight.
+ * Flat vector SVG, transparent background.
+ */
+export function SiteWordmarkLogo({ size = "nav", className = "" }: SiteWordmarkLogoProps) {
+  return (
+    <svg
+      viewBox="0 0 548 52"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label="QSO Dates"
+      className={`site-wordmark-logo site-wordmark-logo--${size} ${className}`.trim()}
+    >
+      <g fill={BRAND_COLOR}>
+        {/* QSO — connected geometric block */}
+        <path d="M2 14 L10 6 L36 6 L44 14 L44 28 L36 36 L10 36 L2 28 Z M12 16 L34 16 L34 30 L12 30 Z M26 26 L40 40 L46 46 L40 50 L24 34 Z" />
+        <path d="M48 10 L82 10 L86 14 L86 18 L82 22 L56 22 L52 26 L52 30 L56 34 L82 34 L86 38 L82 42 L48 42 L48 38 L52 34 L76 34 L80 30 L80 26 L76 22 L52 22 L48 18 Z" />
+        <path d="M90 10 L122 10 L126 14 L126 36 L122 40 L90 40 L86 36 L86 14 Z M96 16 L116 16 L116 34 L96 34 Z" />
+
+        {/* DATES */}
+        <path d="M148 8 L154 8 L154 42 L148 42 Z M154 8 L178 8 L184 14 L184 36 L178 42 L154 42 L154 36 L172 36 L176 32 L176 18 L172 14 L154 14 Z" />
+        <path
+          fillRule="evenodd"
+          d="M192 42 L198 42 L206 26 L222 26 L230 42 L236 42 L216 8 L210 8 Z M208 20 L220 20 L214 32 Z"
+        />
+        <path d="M244 8 L278 8 L278 14 L264 14 L264 42 L258 42 L258 14 L244 14 Z" />
+        <path d="M286 8 L320 8 L320 14 L292 14 L292 22 L316 22 L316 28 L292 28 L292 36 L320 36 L320 42 L286 42 Z" />
+        <path d="M328 10 L362 10 L366 14 L366 18 L362 22 L336 22 L332 26 L332 30 L336 34 L362 34 L366 38 L362 42 L328 42 L328 38 L332 34 L356 34 L360 30 L360 26 L356 22 L332 22 L328 18 Z" />
+      </g>
+    </svg>
+  );
+}

@@ -3,11 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Check, Loader2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2 } from "lucide-react";
 import { Topbar } from "@/components/Topbar";
 import { Footer } from "@/components/Footer";
+import { DocsCodeBlock } from "@/components/DocsCodeBlock";
 import { supabase } from "@/lib/supabase";
-import { API_V1_ENDPOINTS, DAILY_API_LIMIT, getApiBaseUrl } from "@/lib/apiConstants";
+import { API_V1_ENDPOINTS, CANONICAL_SITE_URL, DAILY_API_LIMIT, getApiBaseUrl, SITE_NAME } from "@/lib/apiConstants";
+
+const NAV = [
+  { id: "api-key", label: "Your API key" },
+  { id: "authentication", label: "Authentication" },
+  { id: "base-url", label: "Base URL" },
+  { id: "example", label: "Example request" },
+  { id: "endpoints", label: "Endpoints" },
+];
 
 function withApiKey(path: string, apiKey: string) {
   const joiner = path.includes("?") ? "&" : "?";
@@ -17,127 +26,208 @@ function withApiKey(path: string, apiKey: string) {
 export function ApiDocsClient() {
   const router = useRouter();
   const [apiKey, setApiKey] = useState("");
-  const [baseUrl, setBaseUrl] = useState("");
+  const [baseUrl, setBaseUrl] = useState(getApiBaseUrl);
   const [loading, setLoading] = useState(true);
   const [usedToday, setUsedToday] = useState(0);
   const [remainingToday, setRemainingToday] = useState(DAILY_API_LIMIT);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setBaseUrl(getApiBaseUrl());
+    let cancelled = false;
 
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        router.replace("/login?next=/api-docs");
-        return;
+      try {
+        const headers: HeadersInit = {};
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          headers.Authorization = `Bearer ${session.access_token}`;
+        }
+
+        const res = await fetch("/api/user/api-key", {
+          credentials: "include",
+          headers,
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (cancelled) return;
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            router.replace("/login?next=/api-docs");
+            return;
+          }
+          setError(typeof data.error === "string" ? data.error : "Could not load your API key.");
+          return;
+        }
+
+        const key = typeof data.apiKey === "string" ? data.apiKey : "";
+        if (!key) {
+          setError("No API key was returned. Try refreshing the page or contact support.");
+          return;
+        }
+
+        setApiKey(key);
+        if (typeof data.baseUrl === "string" && data.baseUrl) {
+          setBaseUrl(data.baseUrl);
+        }
+        setUsedToday(data.usedToday ?? 0);
+        setRemainingToday(data.remainingToday ?? DAILY_API_LIMIT);
+      } catch {
+        if (!cancelled) {
+          setError("Could not reach the server. Check your connection and try again.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      const res = await fetch("/api/user/api-key", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "Could not load your API key.");
-        setLoading(false);
-        return;
-      }
-
-      setApiKey(data.apiKey ?? "");
-      setUsedToday(data.usedToday ?? 0);
-      setRemainingToday(data.remainingToday ?? DAILY_API_LIMIT);
-      setLoading(false);
     }
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
-  function copy(text: string, id: string) {
-    navigator.clipboard.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(""), 2000);
+  function copyKey() {
+    if (!apiKey) return;
+    navigator.clipboard.writeText(apiKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
-  const exampleUrl = apiKey
-    ? `${baseUrl}${withApiKey("/activities?limit=10", apiKey)}`
-    : "";
+  const exampleUrl = apiKey ? `${baseUrl}${withApiKey("/activities?limit=10", apiKey)}` : "";
+  const siteHost = CANONICAL_SITE_URL.replace(/^https?:\/\//, "");
 
   return (
     <>
       <Topbar />
       <div className="docs-page">
-        <div className="docs-inner">
-          <div className="docs-header">
-            <h1>Ham Radio API Portal</h1>
-            <p className="section-sub">
-              Your personal API key for QSO Dates. Every request must include your key.
-              {" "}
-              <Link href="/docs">Full documentation</Link>
-            </p>
-          </div>
+        <div className="docs-shell">
+          <aside className="docs-sidebar" aria-label="API portal sections">
+            <p className="docs-sidebar-title">On this page</p>
+            <nav className="docs-sidebar-nav">
+              {NAV.map((item) => (
+                <a key={item.id} href={`#${item.id}`} className="docs-sidebar-link">
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            <div className="docs-sidebar-cta panel">
+              <p className="docs-label">Need more detail?</p>
+              <Link href="/docs" className="btn btn-outline btn-sm docs-sidebar-btn">
+                Full API docs
+              </Link>
+            </div>
+          </aside>
 
-          {loading && (
-            <p className="section-sub">
-              <Loader2 size={16} className="spin" /> Loading your API key…
-            </p>
-          )}
-
-          {error && <p className="form-error panel">{error}</p>}
-
-          {!loading && !error && apiKey && (
-            <>
-              <div className="panel docs-key-card">
-                <p className="docs-label">Your API key</p>
-                <div className="docs-key-row">
-                  <code className="no-cap">{apiKey}</code>
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => copy(apiKey, "key")}>
-                    {copied === "key" ? <Check size={14} /> : <Copy size={14} />}
-                    Copy
-                  </button>
-                </div>
-                <p className="hint">
-                  Daily limit: {DAILY_API_LIMIT} requests. Used today: {usedToday}. Remaining: {remainingToday}.
-                  Resets at midnight UTC.
-                </p>
+          <main className="docs-main">
+            <header className="docs-hero panel" id="overview">
+              <p className="docs-eyebrow">Developer portal</p>
+              <h1>Ham Radio API Portal</h1>
+              <p className="docs-lead">
+                Your personal API key for {SITE_NAME}. Use it with the public endpoint at{" "}
+                <code className="no-cap">{siteHost}</code> to fetch contest, POTA, SOTA, and event data.
+              </p>
+              <div className="docs-hero-actions">
+                <Link href="/docs" className="btn btn-outline btn-sm">Read documentation</Link>
+                <Link href="/downloads" className="btn btn-ghost btn-sm">Bulk download</Link>
               </div>
+            </header>
 
-              <div className="panel">
-                <p className="docs-label">How to authenticate</p>
-                <p className="section-sub">Add your key to every API call using one of these methods:</p>
-                <ul className="docs-auth-list">
-                  <li>Query string: <code className="no-cap">?api_key={apiKey}</code></li>
-                  <li>Header: <code className="no-cap">X-API-Key: {apiKey}</code></li>
-                  <li>Header: <code className="no-cap">Authorization: Bearer {apiKey}</code></li>
-                </ul>
+            {loading && (
+              <div className="panel api-portal-loading">
+                <Loader2 size={20} className="spin" aria-hidden />
+                <span>Loading your API key…</span>
               </div>
+            )}
 
-              <div className="panel">
-                <p className="docs-label">Example request</p>
-                <pre className="docs-code no-cap">{exampleUrl}</pre>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => copy(exampleUrl, "url")}>
-                  {copied === "url" ? "Copied!" : "Copy URL"}
-                </button>
-              </div>
+            {error && <p className="form-error panel">{error}</p>}
 
-              <h2 className="docs-section-title">Endpoints</h2>
-              <p className="section-sub">All examples below include your API key.</p>
-              <div className="docs-endpoints">
-                {API_V1_ENDPOINTS.map((ep) => (
-                  <div key={ep.path + ep.urlTemplate} className="panel docs-endpoint">
-                    <p><strong>GET</strong> <code className="no-cap">{ep.path}</code></p>
-                    <p className="section-sub">{ep.desc}</p>
-                    <p className="hint no-cap">{baseUrl}{withApiKey(ep.exampleUrl, apiKey)}</p>
+            {!loading && !error && apiKey && (
+              <>
+                <section className="docs-block panel api-portal-key-card" id="api-key">
+                  <div className="api-portal-key-head">
+                    <div>
+                      <p className="docs-label">Your API key</p>
+                      <p className="docs-text">Keep this private. It is tied to your account and daily quota.</p>
+                    </div>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={copyKey}>
+                      {copied ? <Check size={14} /> : <Copy size={14} />}
+                      {copied ? "Copied" : "Copy key"}
+                    </button>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
+                  <div className="api-portal-key-value">
+                    <KeyRound size={18} aria-hidden />
+                    <code className="no-cap">{apiKey}</code>
+                  </div>
+                  <div className="docs-stats api-portal-stats">
+                    <div className="docs-stat">
+                      <span className="docs-stat-value">{DAILY_API_LIMIT}</span>
+                      <span className="docs-stat-label">Daily limit</span>
+                    </div>
+                    <div className="docs-stat">
+                      <span className="docs-stat-value">{usedToday}</span>
+                      <span className="docs-stat-label">Used today</span>
+                    </div>
+                    <div className="docs-stat">
+                      <span className="docs-stat-value">{remainingToday}</span>
+                      <span className="docs-stat-label">Remaining</span>
+                    </div>
+                  </div>
+                  <p className="docs-note">Quota resets at midnight UTC.</p>
+                </section>
 
-          <p className="auth-footer-link">
-            <Link href="/docs">Read API docs</Link> | <Link href="/">Back to calendar</Link>
-          </p>
+                <section className="docs-block panel" id="authentication">
+                  <h2>Authentication</h2>
+                  <p className="docs-text">Add your key to every API call using one of these methods:</p>
+                  <DocsCodeBlock label="Query string" code={`${baseUrl}/activities?limit=10&api_key=${apiKey}`} />
+                  <DocsCodeBlock label="Header" code={`X-API-Key: ${apiKey}`} />
+                  <DocsCodeBlock label="Bearer token" code={`Authorization: Bearer ${apiKey}`} />
+                </section>
+
+                <section className="docs-block panel" id="base-url">
+                  <h2>Base URL</h2>
+                  <p className="docs-text">
+                    Public production endpoint for <strong>{SITE_NAME}</strong> ({siteHost}).
+                  </p>
+                  <DocsCodeBlock code={baseUrl} />
+                </section>
+
+                <section className="docs-block panel" id="example">
+                  <h2>Example request</h2>
+                  <p className="docs-text">Try this URL in your browser or API client:</p>
+                  <DocsCodeBlock code={exampleUrl} />
+                </section>
+
+                <section className="docs-block" id="endpoints">
+                  <div className="docs-block-head">
+                    <h2>Endpoints</h2>
+                    <p className="docs-text">All endpoints are <strong>GET</strong> and include your API key in the examples below.</p>
+                  </div>
+                  <div className="docs-endpoints">
+                    {API_V1_ENDPOINTS.map((ep) => (
+                      <article key={ep.path + ep.urlTemplate} className="panel docs-endpoint-card">
+                        <div className="docs-endpoint-top">
+                          <span className="docs-method">GET</span>
+                          <code className="docs-path no-cap">{ep.path}</code>
+                        </div>
+                        <p className="docs-text">{ep.desc}</p>
+                        <DocsCodeBlock
+                          label="Example"
+                          code={`${baseUrl}${withApiKey(ep.exampleUrl, apiKey)}`}
+                        />
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
+
+            <p className="auth-footer-link">
+              <Link href="/docs">Read API docs</Link> | <Link href="/">Back to calendar</Link>
+            </p>
+          </main>
         </div>
       </div>
       <Footer />

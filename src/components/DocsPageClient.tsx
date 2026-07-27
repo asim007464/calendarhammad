@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { API_V1_ENDPOINTS } from "@/lib/apiConstants";
+import { API_V1_ENDPOINTS, CANONICAL_SITE_URL, SITE_NAME } from "@/lib/apiConstants";
 import { DocsCodeBlock } from "@/components/DocsCodeBlock";
 
 const NAV = [
@@ -104,6 +104,10 @@ export function DocsPageClient({ baseUrl, dailyLimit }: Props) {
 
           <section className="docs-block panel" id="base-url">
             <h2>Base URL</h2>
+            <p className="docs-text">
+              All API requests go to the public <strong>{SITE_NAME}</strong> endpoint at{" "}
+              <code className="no-cap">{CANONICAL_SITE_URL.replace(/^https?:\/\//, "")}</code>.
+            </p>
             <DocsCodeBlock code={baseUrl} />
           </section>
 

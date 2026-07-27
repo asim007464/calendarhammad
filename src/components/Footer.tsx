@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoWordmark } from "@/components/LogoWordmark";
+import BrandMark from "@/components/BrandMark";
 import { AdminNavLink } from "@/components/AdminNavLink";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { FacebookIcon, GithubIcon, InstagramIcon, XIcon } from "@/components/SocialIcons";
@@ -19,7 +19,7 @@ export function Footer() {
       <div className="footer-inner">
         <div className="footer-brand">
           <Link href="/" className="brand-mark-link footer-logo" aria-label="QSO Dates home">
-            <LogoWordmark size="footer" />
+            <BrandMark link={false} size="footer" />
           </Link>
           <p className="footer-tagline">
             Your Worldwide Hub For Amateur Radio Activities. Ham radio contests, special event stations,{" "}

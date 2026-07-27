@@ -126,7 +126,7 @@ export function HomeClient({ initialActivities, activityTypes, broadcast }: Prop
 
       {broadcast && !dismissedBroadcast && (
         <div className="broadcast-banner" style={{ maxWidth: 1264, margin: "0 auto 16px", padding: "0 28px" }}>
-          <div style={{ background: "linear-gradient(135deg, rgba(198,255,52,0.15), rgba(198,255,52,0.05))", border: "1px solid rgba(198,255,52,0.3)", borderRadius: 16, padding: "16px 20px", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ background: "linear-gradient(135deg, rgba(255,92,77,0.15), rgba(255,92,77,0.05))", border: "1px solid rgba(255,92,77,0.3)", borderRadius: 16, padding: "16px 20px", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div>
               <h3 className="no-cap">{broadcast.title}</h3>
               <p>{broadcast.message}</p>

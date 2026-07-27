@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
@@ -29,12 +28,7 @@ export function Topbar({ onAddActivity, onLoginRequired }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { isLoggedIn, canAccessAdmin, loading } = useAuth();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -46,6 +40,10 @@ export function Topbar({ onAddActivity, onLoginRequired }: TopbarProps) {
   }, [menuOpen]);
 
   useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     if (!menuOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setMenuOpen(false);
@@ -55,6 +53,7 @@ export function Topbar({ onAddActivity, onLoginRequired }: TopbarProps) {
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
+  const toggleMenu = () => setMenuOpen((open) => !open);
 
   const loginHref = `/login?next=${encodeURIComponent(pathname || "/")}`;
 
@@ -87,53 +86,6 @@ export function Topbar({ onAddActivity, onLoginRequired }: TopbarProps) {
         : pathname === href || pathname.startsWith(`${href}/`);
     return active ? "nav-link active" : "nav-link";
   }
-
-  const mobileMenu = menuOpen && mounted
-    ? createPortal(
-        <>
-          <button type="button" className="mobile-overlay" aria-label="Close menu" onClick={closeMenu} />
-          <div className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Site menu">
-            <div className="mobile-drawer-head">
-              <BrandMark link={false} size="nav" />
-              <button type="button" className="btn btn-ghost btn-sm" onClick={closeMenu} aria-label="Close">
-                <X size={20} />
-              </button>
-            </div>
-            <nav className="mobile-drawer-nav">
-              {MAIN_NAV.map((item) => (
-                <Link key={item.id} href={item.href} className={navClass(item.href)} onClick={closeMenu}>
-                  {item.label}
-                </Link>
-              ))}
-              <Link href="/dashboard" className="nav-link" onClick={closeMenu}>Profile</Link>
-              {!loading && canAccessAdmin && (
-                <Link href="/admin" className="nav-link" onClick={closeMenu}>Admin</Link>
-              )}
-              <Link href="/downloads" className="nav-link" onClick={closeMenu}>Downloads</Link>
-            </nav>
-            <div className="mobile-drawer-actions">
-              <InstallAppButton variant="card" />
-              <Link href="/contact" className="btn btn-ghost btn-sm" onClick={closeMenu}>Contact</Link>
-              {isLoggedIn ? (
-                <>
-                  <Link href="/dashboard" className="btn btn-ghost btn-sm" onClick={closeMenu}>Account</Link>
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={handleLogout}>
-                    <LogOut size={14} aria-hidden="true" />
-                    Logout
-                  </button>
-                  <button type="button" className="btn btn-primary" onClick={handleAddActivity}>Add Activity</button>
-                </>
-              ) : (
-                <Link href={loginHref} className="btn btn-primary" onClick={closeMenu}>
-                  Sign In to Add Activity
-                </Link>
-              )}
-            </div>
-          </div>
-        </>,
-        document.body
-      )
-    : null;
 
   return (
     <>
@@ -180,15 +132,65 @@ export function Topbar({ onAddActivity, onLoginRequired }: TopbarProps) {
           <button
             type="button"
             className="mobile-menu-btn mobile-only"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
+            onClick={toggleMenu}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
+            aria-controls="mobile-site-menu"
           >
-            <Menu size={22} />
+            {menuOpen ? <X size={22} aria-hidden /> : <Menu size={22} aria-hidden />}
           </button>
         </div>
       </header>
-      {mobileMenu}
+
+      {menuOpen && (
+        <>
+          <button type="button" className="mobile-overlay" aria-label="Close menu" onClick={closeMenu} />
+          <div
+            id="mobile-site-menu"
+            className="mobile-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site menu"
+          >
+            <div className="mobile-drawer-head">
+              <BrandMark link={false} size="nav" />
+              <button type="button" className="btn btn-ghost btn-sm" onClick={closeMenu} aria-label="Close">
+                <X size={20} />
+              </button>
+            </div>
+            <nav className="mobile-drawer-nav">
+              {MAIN_NAV.map((item) => (
+                <Link key={item.id} href={item.href} className={navClass(item.href)} onClick={closeMenu}>
+                  {item.label}
+                </Link>
+              ))}
+              <Link href="/dashboard" className="nav-link" onClick={closeMenu}>Profile</Link>
+              {!loading && canAccessAdmin && (
+                <Link href="/admin" className="nav-link" onClick={closeMenu}>Admin</Link>
+              )}
+              <Link href="/downloads" className="nav-link" onClick={closeMenu}>Downloads</Link>
+            </nav>
+            <div className="mobile-drawer-actions">
+              <InstallAppButton variant="card" />
+              <Link href="/contact" className="btn btn-ghost btn-sm" onClick={closeMenu}>Contact</Link>
+              {isLoggedIn ? (
+                <>
+                  <Link href="/dashboard" className="btn btn-ghost btn-sm" onClick={closeMenu}>Account</Link>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={handleLogout}>
+                    <LogOut size={14} aria-hidden="true" />
+                    Logout
+                  </button>
+                  <button type="button" className="btn btn-primary" onClick={handleAddActivity}>Add Activity</button>
+                </>
+              ) : (
+                <Link href={loginHref} className="btn btn-primary" onClick={closeMenu}>
+                  Sign In to Add Activity
+                </Link>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

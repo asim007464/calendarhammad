@@ -1,6 +1,7 @@
 import { getSiteUrl } from "@/lib/siteUrl";
 
 export const CANONICAL_SITE_URL = "https://www.qsodates.com";
+export const SITE_NAME = "QSO Dates";
 export const DAILY_API_LIMIT = Number(process.env.DAILY_API_LIMIT ?? 20);
 
 export interface ApiEndpointParameter {
@@ -79,15 +80,17 @@ export const API_V1_ENDPOINTS: ApiEndpoint[] = [
 
 export function getApiBaseUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-  if (fromEnv) {
+  if (fromEnv && !/(localhost|127\.0\.0\.1)/i.test(fromEnv)) {
     const base = fromEnv.replace(/\/$/, "");
     return base.endsWith("/api/v1") ? base : `${base}/api/v1`;
   }
-  const site = getSiteUrl();
-  if (site.includes("localhost") || site.includes("127.0.0.1")) {
-    return `${site}/api/v1`;
-  }
+  // Always show the public production API URL in docs/portal (not localhost).
   return `${CANONICAL_SITE_URL}/api/v1`;
+}
+
+/** Runtime site origin for server callbacks (may be localhost in dev). */
+export function getRuntimeSiteUrl(): string {
+  return getSiteUrl();
 }
 
 export function buildFullApiUrl(baseUrl: string, path: string): string {

@@ -2,8 +2,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
 
-export const APP_ICON_BG = "#0a0c08";
-export const APP_ICON_COLOR = "#c6ff34";
+export const APP_ICON_BG = "#0c0808";
+export const APP_ICON_COLOR = "#FF5C4D";
 
 let fontDataPromise: Promise<ArrayBuffer> | null = null;
 
