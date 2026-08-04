@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { HomepageContent, LockdownSettings } from "@/lib/siteSettings";
+import type { Activity } from "@/types/database";
 
 export interface AdminUser {
   id: string;
@@ -14,16 +15,10 @@ export interface AdminUser {
   created_at: string;
 }
 
-export interface AdminActivity {
-  id: string;
-  name: string;
-  type_name: string;
-  callsign: string;
-  start_at: string;
+export type AdminActivity = Activity & {
   status: string;
-  created_at: string;
   profiles?: { name: string; callsign: string; email: string };
-}
+};
 
 export interface AdminSupport {
   id: string;

@@ -5,7 +5,15 @@ export function parseDate(s?: string | null): Date | null {
 }
 
 export function colorFor(type: string, colors?: Record<string, string>): string {
-  return colors?.[type] || "#64748b";
+  if (colors?.[type]) return colors[type];
+  // Stable distinct color for unknown types (hash → HSL)
+  const key = String(type || "Other");
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  const hue = hash % 360;
+  const sat = 58 + (hash % 20);
+  const light = 42 + (hash % 12);
+  return `hsl(${hue} ${sat}% ${light}%)`;
 }
 
 export function isRecurring(r: RecurrenceType): boolean {

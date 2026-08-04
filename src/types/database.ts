@@ -113,6 +113,7 @@ export const BANDS = ["160m", "80m", "40m", "30m", "20m", "17m", "15m", "12m", "
 export const MODES = ["SSB", "CW", "FT8", "FT4", "RTTY", "Digital", "Satellite", "Other"];
 
 export const TYPE_COLORS: Record<string, string> = {
+  // Core types
   Contest: "#ef4444",
   "Special Event": "#f59e0b",
   "Award Program": "#eab308",
@@ -122,6 +123,17 @@ export const TYPE_COLORS: Record<string, string> = {
   Net: "#3b82f6",
   "Field Day": "#ec4899",
   Other: "#64748b",
+  // QSO_Dates_Cleaned categories (distinct colors)
+  Championship: "#b91c1c",
+  "QSO Party": "#f97316",
+  Activity: "#2563eb",
+  Memorial: "#a855f7",
+  Sprint: "#ca8a04",
+  QRP: "#14b8a6",
+  "Emergency Exercise": "#9f1239",
+  "QRP Sprint": "#0f766e",
+  "QRP Contest": "#059669",
+  "QRP Event": "#0891b2",
 };
 
 export const SOCIAL_LINKS = {

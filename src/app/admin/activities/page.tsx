@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { adminFetch, useAdminData } from "@/components/admin/useAdminData";
+import { useEffect, useMemo, useState } from "react";
+import { Pencil, Plus } from "lucide-react";
+import { ActivityModal } from "@/components/ActivityModal";
+import { adminFetch, useAdminData, type AdminActivity } from "@/components/admin/useAdminData";
 import { fmtUTC } from "@/lib/activity-utils";
+import type { ActivityType } from "@/types/database";
 
 const PER_PAGE = 12;
 
@@ -13,6 +16,23 @@ export default function AdminActivitiesPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState("");
+  const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
+  const [editing, setEditing] = useState<AdminActivity | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/activity-types")
+      .then((res) => res.json())
+      .then((types) => {
+        if (!cancelled && Array.isArray(types)) setActivityTypes(types);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const types = useMemo(() => {
     if (!data) return [];
@@ -55,6 +75,18 @@ export default function AdminActivitiesPage() {
     setBusyId("");
   }
 
+  function showToast(message: string) {
+    setToast(message);
+    setTimeout(() => setToast(""), 3000);
+  }
+
+  async function handleSaved(message?: string) {
+    setEditing(null);
+    setCreating(false);
+    await refresh();
+    showToast(message || "Saved.");
+  }
+
   if (loading) return <p className="section-sub">Loading activities…</p>;
 
   const pending = data?.stats.pendingActivities ?? 0;
@@ -65,10 +97,17 @@ export default function AdminActivitiesPage() {
         <div>
           <h1>Activities</h1>
           <p className="section-sub">
-            {pending > 0 ? `${pending} submissions waiting for approval.` : "Manage and approve calendar events."}
+            {pending > 0
+              ? `${pending} submissions waiting for approval.`
+              : "Manage, edit, and approve calendar events."}
           </p>
         </div>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => { setCreating(true); setEditing(null); }}>
+          <Plus size={14} /> Add activity
+        </button>
       </div>
+
+      {toast && <p className="admin-toast panel">{toast}</p>}
 
       <div className="admin-filters panel">
         <input
@@ -107,7 +146,18 @@ export default function AdminActivitiesPage() {
             <tbody>
               {pageItems.map((a) => (
                 <tr key={a.id} className={a.status === "pending_review" ? "admin-row-pending" : ""}>
-                  <td>{a.name}</td>
+                  <td>
+                    <div className="admin-activity-name-cell">
+                      {(a.image_url || a.logo_url) && (
+                        <img
+                          src={a.image_url || a.logo_url || ""}
+                          alt=""
+                          className="admin-activity-thumb"
+                        />
+                      )}
+                      <span>{a.name}</span>
+                    </div>
+                  </td>
                   <td>{a.type_name}</td>
                   <td className="no-cap">{a.callsign}</td>
                   <td className="no-cap">{a.profiles?.name || a.profiles?.email || "—"}</td>
@@ -119,6 +169,14 @@ export default function AdminActivitiesPage() {
                   </td>
                   <td className="no-cap">{a.created_at ? fmtUTC(a.created_at) : "—"}</td>
                   <td className="admin-actions-cell">
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      disabled={busyId === a.id}
+                      onClick={() => { setEditing(a); setCreating(false); }}
+                    >
+                      <Pencil size={14} /> Edit
+                    </button>
                     {a.status === "pending_review" && (
                       <>
                         <button type="button" className="btn btn-primary btn-sm" disabled={busyId === a.id} onClick={() => reviewActivity(a.id, "approve")}>Approve</button>
@@ -137,6 +195,17 @@ export default function AdminActivitiesPage() {
             <button type="button" className="btn btn-ghost btn-sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
           </div>
         </div>
+      )}
+
+      {(editing || creating) && (
+        <ActivityModal
+          key={editing?.id ?? "new"}
+          activityTypes={activityTypes}
+          editing={editing}
+          adminMode
+          onClose={() => { setEditing(null); setCreating(false); }}
+          onSaved={handleSaved}
+        />
       )}
     </div>
   );

@@ -44,13 +44,23 @@ export async function getActivities(): Promise<Activity[]> {
 }
 
 export async function getActivityTypes(): Promise<ActivityType[]> {
-  if (!isSupabaseConfigured()) return DEFAULT_TYPES;
+  const defaults = DEFAULT_TYPES;
+  if (!isSupabaseConfigured()) return defaults;
   try {
     const supabase = await createClient();
     const { data } = await supabase.from("activity_types").select("*").order("name");
-    return data?.length ? data : DEFAULT_TYPES;
+    if (!data?.length) return defaults;
+    const byName = new Map<string, ActivityType>();
+    for (const t of defaults) byName.set(t.name, t);
+    for (const t of data) {
+      byName.set(t.name, {
+        ...t,
+        color: t.color || TYPE_COLORS[t.name] || t.color,
+      });
+    }
+    return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
   } catch {
-    return DEFAULT_TYPES;
+    return defaults;
   }
 }
 

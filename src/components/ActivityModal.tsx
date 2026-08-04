@@ -6,10 +6,13 @@ import type { Activity, ActivityType } from "@/types/database";
 import { BANDS, MODES } from "@/types/database";
 import { UtcDateTimePicker } from "@/components/UtcDateTimePicker";
 import { defaultUtcPickerValue, isoToUtcPickerValue } from "@/lib/utcDateTime";
+import { supabase } from "@/lib/supabase";
 
 interface Props {
   activityTypes: ActivityType[];
   editing?: Activity | null;
+  /** Admin can set publish status while editing. */
+  adminMode?: boolean;
   onClose: () => void;
   onSaved?: (message?: string) => void;
 }
@@ -17,7 +20,17 @@ interface Props {
 async function uploadImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch("/api/activities/upload", { method: "POST", body: formData });
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: HeadersInit = {};
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+  const res = await fetch("/api/activities/upload", {
+    method: "POST",
+    body: formData,
+    headers,
+    credentials: "include",
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Upload failed.");
   return data.url as string;
@@ -102,7 +115,7 @@ function ImageUploadField({
   );
 }
 
-export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Props) {
+export function ActivityModal({ activityTypes, editing, adminMode = false, onClose, onSaved }: Props) {
   const [bands, setBands] = useState<string[]>(editing?.bands || []);
   const [modes, setModes] = useState<string[]>(editing?.modes || []);
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>(
@@ -113,6 +126,7 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
   const [newType, setNewType] = useState("");
   const [imageUrl, setImageUrl] = useState(editing?.image_url || "");
   const [logoUrl, setLogoUrl] = useState(editing?.logo_url || "");
+  const [status, setStatus] = useState(editing?.status || "published");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [startUtc, setStartUtc] = useState(
@@ -144,7 +158,7 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
     const cf: Record<string, string> = {};
     customFields.forEach(({ key, value }) => { if (key.trim()) cf[key.trim()] = value; });
 
-    const body = {
+    const body: Record<string, unknown> = {
       name: fd.get("name"),
       type_name: fd.get("type"),
       description: fd.get("description"),
@@ -165,13 +179,23 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
       image_url: imageUrl || null,
     };
 
+    if (adminMode && editing) {
+      body.status = status;
+    }
+
     const url = editing ? `/api/activities/${editing.id}` : "/api/activities";
     const method = editing ? "PUT" : "POST";
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers,
         credentials: "include",
         body: JSON.stringify(body),
       });
@@ -186,7 +210,11 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
       if (newType.trim() && res.ok) {
         await fetch("/api/activity-types", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          credentials: "include",
           body: JSON.stringify({ name: newType.trim() }),
         });
       }
@@ -196,7 +224,14 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
         return;
       }
 
-      onSaved?.(data.message || (data.pendingApproval ? "Submitted for admin approval." : "Activity published!"));
+      onSaved?.(
+        data.message ||
+          (editing
+            ? "Activity updated."
+            : data.pendingApproval
+              ? "Submitted for admin approval."
+              : "Activity published!")
+      );
     } catch {
       setError("Could not reach the server. Try again in a moment.");
     } finally {
@@ -209,7 +244,7 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
       <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 760 }}>
         <div className="modal-head">
           <div>
-            <p className="modal-eyebrow">{editing ? "Edit" : "New submission"}</p>
+            <p className="modal-eyebrow">{editing ? (adminMode ? "Admin edit" : "Edit") : "New submission"}</p>
             <h2>{editing ? "Edit Activity" : "Add Activity"}</h2>
           </div>
           <button type="button" className="icon-btn" onClick={onClose}>×</button>
@@ -278,6 +313,16 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
                 <option value="monthly">Monthly</option>
               </select>
             </label>
+            {adminMode && editing && (
+              <label className="field">
+                <span>Status</span>
+                <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="pending_review">Pending review</option>
+                  <option value="published">Published</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </label>
+            )}
             <div className="field">
               <span>Bands</span>
               <div className="chip-row">
@@ -350,7 +395,7 @@ export function ActivityModal({ activityTypes, editing, onClose, onSaved }: Prop
             )}
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? "Saving…" : editing ? "Update" : "Publish Activity"}
+              {loading ? "Saving…" : editing ? "Save changes" : "Publish Activity"}
             </button>
           </div>
         </form>
