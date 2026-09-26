@@ -89,14 +89,26 @@ export function formatActivityForApi(row: Activity) {
     grid: row.grid ?? "",
     reference: row.reference ?? "",
     website: row.website ?? "",
+    email: row.email ?? "",
     qrz: row.qrz ?? "",
     registration: row.registration ?? "",
     certificate: row.certificate ?? "",
+    award_details: row.award_details ?? "",
+    notes: row.notes ?? "",
+    custom_fields: row.custom_fields ?? {},
     logo_url: row.logo_url ?? null,
     image_url: row.image_url ?? null,
     view_count: row.view_count ?? 0,
     click_count: row.click_count ?? 0,
     created_at: row.created_at,
     updated_at: row.updated_at,
+  };
+}
+
+export function formatOwnedActivityForApi(row: Activity) {
+  return {
+    ...formatActivityForApi(row),
+    status: row.status ?? "published",
+    user_id: row.user_id ?? null,
   };
 }

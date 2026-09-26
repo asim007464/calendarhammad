@@ -2114,6 +2114,19 @@ a { color: var(--brand-light); }
   font-weight: 800;
   letter-spacing: 0.06em;
 }
+.docs-method.post {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+}
+.docs-method.put,
+.docs-method.patch {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+}
+.docs-method.delete {
+  background: rgba(239, 68, 68, 0.16);
+  color: #f87171;
+}
 .docs-path {
   font-family: var(--mono);
   font-size: 15px;

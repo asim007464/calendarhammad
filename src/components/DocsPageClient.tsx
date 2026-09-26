@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { API_V1_ENDPOINTS, CANONICAL_SITE_URL, SITE_NAME } from "@/lib/apiConstants";
+import { API_V1_ENDPOINTS, CANONICAL_SITE_URL, SITE_NAME, type ApiEndpoint } from "@/lib/apiConstants";
 import { DocsCodeBlock } from "@/components/DocsCodeBlock";
 
 const NAV = [
@@ -37,11 +37,20 @@ const EXAMPLE_RESPONSE = `{
 
 const ERROR_CODES = [
   { code: "401", title: "Unauthorized", desc: "Missing or invalid API key." },
-  { code: "403", title: "Forbidden", desc: "Account is blocked." },
+  { code: "403", title: "Forbidden", desc: "Account is blocked, or the email is not verified for a write request." },
   { code: "404", title: "Not found", desc: "Activity does not exist." },
   { code: "429", title: "Too many requests", desc: "Daily API limit reached." },
-  { code: "400", title: "Bad request", desc: "Invalid or missing query parameters." },
+  { code: "400", title: "Bad request", desc: "Invalid or missing fields." },
+  { code: "409", title: "Conflict", desc: "That activity type already exists." },
 ];
+
+function exampleFor(ep: ApiEndpoint, baseUrl: string) {
+  if (ep.exampleRequest) {
+    return ep.exampleRequest.replaceAll("{{base}}", baseUrl).replaceAll("{{key}}", "qd_your_key_here");
+  }
+  const joiner = ep.exampleUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${ep.exampleUrl}${joiner}api_key=qd_your_key_here`;
+}
 
 interface Props {
   baseUrl: string;
@@ -74,8 +83,9 @@ export function DocsPageClient({ baseUrl, dailyLimit }: Props) {
             <p className="docs-eyebrow">Developer documentation</p>
             <h1>Ham Radio Events API</h1>
             <p className="docs-lead">
-              Read-only REST API for amateur radio activity data: contests, POTA, SOTA,
-              DXpeditions, nets, and field days. Sign in to get your personal API key.
+              REST API for amateur radio dates and events. Register, verify your email, then use your
+              API key to read activities and to add, update, or delete the same events you can manage on the website.
+              Any other site can call these routes and display the details.
             </p>
             <div className="docs-hero-actions">
               <Link href="/api-docs" className="btn btn-primary">Get API key</Link>
@@ -138,20 +148,20 @@ export function DocsPageClient({ baseUrl, dailyLimit }: Props) {
           <section className="docs-block" id="endpoints">
             <div className="docs-block-head">
               <h2>Endpoints</h2>
-              <p className="docs-text">All endpoints are <strong>GET</strong> and require your API key.</p>
+              <p className="docs-text">
+                Every endpoint needs your API key and counts toward the daily limit. Write routes also require a verified email.
+                Responses include CORS headers so another website can call them from the browser.
+              </p>
             </div>
             <div className="docs-endpoints">
               {API_V1_ENDPOINTS.map((ep) => (
-                <article key={ep.urlTemplate} className="panel docs-endpoint-card">
+                <article key={`${ep.method}-${ep.path}`} className="panel docs-endpoint-card">
                   <div className="docs-endpoint-top">
-                    <span className="docs-method">GET</span>
+                    <span className={`docs-method ${ep.method.toLowerCase()}`}>{ep.method}</span>
                     <code className="docs-path no-cap">{ep.path}</code>
                   </div>
                   <p className="docs-text">{ep.desc}</p>
-                  <DocsCodeBlock
-                    label="Example"
-                    code={`${baseUrl}${ep.exampleUrl}${ep.exampleUrl.includes("?") ? "&" : "?"}api_key=qd_your_key_here`}
-                  />
+                  <DocsCodeBlock label="Example" code={exampleFor(ep, baseUrl)} />
                   {ep.parameters.length > 0 && (
                     <div className="docs-params-wrap">
                       <table className="docs-params">

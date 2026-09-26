@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
-import { normalizeActivityBody } from "@/lib/activity-api";
-import { isAdminEmail } from "@/lib/admin";
-import { notifyAdminEmail, sendAdminActivityNotificationEmail } from "@/lib/mail";
+import { isSupabaseConfigured } from "@/lib/supabase/admin";
+import { createActivityForUser } from "@/lib/manageActivities";
 import type { Activity } from "@/types/database";
 const DEMO_ACTIVITIES: Activity[] = [
   {
@@ -41,17 +39,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const raw = await request.json();
-  const body = normalizeActivityBody(raw);
-
-  if (!body.name) {
-    return NextResponse.json({ error: "Activity name is required" }, { status: 400 });
-  }
-  if (!body.start_at) {
-    return NextResponse.json({ error: "Start date/time is required" }, { status: 400 });
-  }
-
   try {
+    const raw = await request.json();
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -62,74 +51,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const admin = createAdminClient();
-
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("role, email, name, callsign")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    const isAdmin =
-      isAdminEmail(user.email) ||
-      isAdminEmail(profile?.email) ||
-      profile?.role === "admin";
-
-    const status = isAdmin ? "published" : "pending_review";
-
-    const { data, error } = await admin
-      .from("activities")
-      .insert({
-        ...body,
-        user_id: user.id,
-        status,
-      })
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-
-    await admin.from("activity_logs").insert({
-      activity_id: data.id,
-      user_id: user?.id || null,
-      event_type: "social_post",
-      metadata: { action: "created", status },
-    });
-
-    await notifyAdminEmail((to) =>
-      sendAdminActivityNotificationEmail({
-        to,
-        activityId: data.id,
-        activityName: data.name,
-        activityType: data.type_name || "Other",
-        submitterName: profile?.name || user.email?.split("@")[0] || "User",
-        submitterEmail: profile?.email || user.email || "",
-        callsign: data.callsign || profile?.callsign || undefined,
-        status: status as "published" | "pending_review",
-        startAt: data.start_at,
-        country: data.country || undefined,
-      })
-    );
-
-    if (status === "published") {
-      fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/social/post`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activity_id: data.id }),
-      }).catch(() => {});
+    const result = await createActivityForUser(user.id, raw && typeof raw === "object" ? raw : {});
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.statusCode });
     }
 
     return NextResponse.json(
       {
-        ...data,
-        pendingApproval: status === "pending_review",
-        message:
-          status === "pending_review"
-            ? "Activity submitted for admin approval. It will appear on the site once approved."
-            : "Activity published.",
+        ...result.activity,
+        pendingApproval: result.pendingApproval,
+        message: result.message,
       },
-      { status: 201 }
-    );  } catch (e) {
+      { status: result.statusCode }
+    );
+  } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
 }

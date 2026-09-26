@@ -8,7 +8,7 @@ import { Topbar } from "@/components/Topbar";
 import { Footer } from "@/components/Footer";
 import { DocsCodeBlock } from "@/components/DocsCodeBlock";
 import { supabase } from "@/lib/supabase";
-import { API_V1_ENDPOINTS, CANONICAL_SITE_URL, DAILY_API_LIMIT, getApiBaseUrl, SITE_NAME } from "@/lib/apiConstants";
+import { API_V1_ENDPOINTS, CANONICAL_SITE_URL, DAILY_API_LIMIT, getApiBaseUrl, SITE_NAME, type ApiEndpoint } from "@/lib/apiConstants";
 
 const NAV = [
   { id: "api-key", label: "Your API key" },
@@ -21,6 +21,13 @@ const NAV = [
 function withApiKey(path: string, apiKey: string) {
   const joiner = path.includes("?") ? "&" : "?";
   return `${path}${joiner}api_key=${apiKey}`;
+}
+
+function exampleFor(ep: ApiEndpoint, baseUrl: string, apiKey: string) {
+  if (ep.exampleRequest) {
+    return ep.exampleRequest.replaceAll("{{base}}", baseUrl).replaceAll("{{key}}", apiKey);
+  }
+  return `${baseUrl}${withApiKey(ep.exampleUrl, apiKey)}`;
 }
 
 export function ApiDocsClient() {
@@ -126,8 +133,9 @@ export function ApiDocsClient() {
               <p className="docs-eyebrow">Developer portal</p>
               <h1>Ham Radio API Portal</h1>
               <p className="docs-lead">
-                Your personal API key for {SITE_NAME}. Use it with the public endpoint at{" "}
-                <code className="no-cap">{siteHost}</code> to fetch contest, POTA, SOTA, and event data.
+                Your personal API key for {SITE_NAME}. Register first, then use this key to read events and to
+                add or update the same dates, activities, profile, and support messages you can manage on the site.
+                Other websites can call <code className="no-cap">{siteHost}</code> and show the details.
               </p>
               <div className="docs-hero-actions">
                 <Link href="/docs" className="btn btn-outline btn-sm">Read documentation</Link>
@@ -203,20 +211,17 @@ export function ApiDocsClient() {
                 <section className="docs-block" id="endpoints">
                   <div className="docs-block-head">
                     <h2>Endpoints</h2>
-                    <p className="docs-text">All endpoints are <strong>GET</strong> and include your API key in the examples below.</p>
+                    <p className="docs-text">Each call uses your API key and the daily limit. Write calls need a verified email.</p>
                   </div>
                   <div className="docs-endpoints">
                     {API_V1_ENDPOINTS.map((ep) => (
-                      <article key={ep.path + ep.urlTemplate} className="panel docs-endpoint-card">
+                      <article key={`${ep.method}-${ep.path}`} className="panel docs-endpoint-card">
                         <div className="docs-endpoint-top">
-                          <span className="docs-method">GET</span>
+                          <span className={`docs-method ${ep.method.toLowerCase()}`}>{ep.method}</span>
                           <code className="docs-path no-cap">{ep.path}</code>
                         </div>
                         <p className="docs-text">{ep.desc}</p>
-                        <DocsCodeBlock
-                          label="Example"
-                          code={`${baseUrl}${withApiKey(ep.exampleUrl, apiKey)}`}
-                        />
+                        <DocsCodeBlock label="Example" code={exampleFor(ep, baseUrl, apiKey)} />
                       </article>
                     ))}
                   </div>

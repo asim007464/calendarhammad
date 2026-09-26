@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizeActivityBody } from "@/lib/activity-api";
+import { updateActivityForUser } from "@/lib/manageActivities";
 import { verifyAdminSession } from "@/lib/adminAuth";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -40,51 +40,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const raw = await request.json();
-  const body = normalizeActivityBody(raw);
-
-  if (!body.name) {
-    return NextResponse.json({ error: "Activity name is required" }, { status: 400 });
+  const result = await updateActivityForUser(
+    editor.userId,
+    id,
+    raw && typeof raw === "object" ? raw : {}
+  );
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.statusCode });
   }
-  if (!body.start_at) {
-    return NextResponse.json({ error: "Start date/time is required" }, { status: 400 });
-  }
-
-  const admin = createAdminClient();
-  const { data: existing, error: fetchError } = await admin
-    .from("activities")
-    .select("id, user_id, status")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 400 });
-  if (!existing) return NextResponse.json({ error: "Activity not found" }, { status: 404 });
-
-  if (!editor.isAdmin && existing.user_id !== editor.userId) {
-    return NextResponse.json({ error: "You can only edit your own activities." }, { status: 403 });
-  }
-
-  const updatePayload: Record<string, unknown> = {
-    ...body,
-    updated_at: new Date().toISOString(),
-  };
-
-  // Admins can optionally change status when provided.
-  if (editor.isAdmin && typeof raw.status === "string" && raw.status.trim()) {
-    const status = raw.status.trim();
-    if (["pending_review", "published", "rejected"].includes(status)) {
-      updatePayload.status = status;
-    }
-  }
-
-  const { data, error } = await admin
-    .from("activities")
-    .update(updatePayload)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json(data);
+  return NextResponse.json(result.activity);
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {

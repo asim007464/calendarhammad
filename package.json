@@ -6,7 +6,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "set NODE_OPTIONS=--max-http-header-size=131072&& next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
